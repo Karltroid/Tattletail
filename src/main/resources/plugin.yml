@@ -1,0 +1,23 @@
+name: Tattletail
+version: '${project.version}'
+main: me.karltroid.tattletail.Tattletail
+api-version: 1.20
+authors: [ Karltroid ]
+description: Inform admins about potential stealing/griefing of new players
+website: https://modernbeta.org/
+depend: [ CoreProtect ]
+softdepend: [ DiscordSRV ]
+commands:
+  tattletail:
+    description: Use the various tattletail sub commands like
+    permission: tattletail.admin
+    usage: /tattletail <subcommand>
+    aliases:
+      - tt
+  joinage:
+    description: Shows the join age of a player
+    usage: /joinage <playername>
+    aliases:
+      - age
+      - joindate
+      - joinage
