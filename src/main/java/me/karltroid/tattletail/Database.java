@@ -37,16 +37,18 @@ public class Database
              Statement stmt = conn.createStatement()) {
             stmt.executeUpdate(
                     "CREATE TABLE IF NOT EXISTS " + IGNORED_PLAYERS_TABLE_NAME + " ("
-                            + "player1UUID VARCHAR(36) NOT NULL PRIMARY KEY,"
-                            + "player2UUID VARCHAR(36) NOT NULL"
+                            + "player1UUID VARCHAR(36) NOT NULL,"
+                            + "player2UUID VARCHAR(36) NOT NULL,"
+                            + "PRIMARY KEY (player1UUID, player2UUID)"
                             + ")"
             );
             stmt.executeUpdate(
                     "CREATE TABLE IF NOT EXISTS " + IGNORED_LOCATIONS_TABLE_NAME + " ("
-                            + "world VARCHAR(36) NOT NULL PRIMARY KEY,"
+                            + "world VARCHAR(36) NOT NULL,"
                             + "x INT NOT NULL,"
                             + "y INT NOT NULL,"
-                            + "z INT NOT NULL"
+                            + "z INT NOT NULL,"
+                            + "PRIMARY KEY (world, x, y, z)"
                             + ")"
             );
             Tattletail.log("Tables created successfully");
@@ -58,12 +60,6 @@ public class Database
 
     public static void loadIgnoredPlayers()
     {
-        if (Tattletail.getInstance() == null)
-        {
-            Tattletail.log("Tattletail singleton is null.");
-            return;
-        }
-
         try (Connection conn = getConnection(Tattletail.getInstance()))
         {
             try (PreparedStatement ignoredPlayersDataStatement = conn.prepareStatement("SELECT * FROM " + IGNORED_PLAYERS_TABLE_NAME))
@@ -92,12 +88,6 @@ public class Database
 
     public static void loadIgnoredLocations()
     {
-        if (Tattletail.getInstance() == null)
-        {
-            Tattletail.log("Tattletail singleton is null.");
-            return;
-        }
-
         try (Connection conn = getConnection(Tattletail.getInstance()))
         {
             try (PreparedStatement ignoredLocationsDataStatement = conn.prepareStatement("SELECT * FROM " + IGNORED_LOCATIONS_TABLE_NAME))
@@ -117,8 +107,6 @@ public class Database
 
                         Tattletail.getInstance().ignoreLocations.add(new Location(world, x, y, z));
                     }
-
-                    Tattletail.log("Ignored locations loaded successfully");
                 }
             }
         }
@@ -138,7 +126,8 @@ public class Database
                      "DELETE FROM " + IGNORED_PLAYERS_TABLE_NAME
              );
              PreparedStatement insertIgnoredPlayersStatement = conn.prepareStatement(
-                     "INSERT INTO " + IGNORED_PLAYERS_TABLE_NAME + " (player1UUID, player2UUID) VALUES (?, ?)"
+                     "INSERT INTO " + IGNORED_PLAYERS_TABLE_NAME + " (player1UUID, player2UUID) VALUES (?, ?)" +
+                             "ON CONFLICT(player1UUID, player2UUID) DO UPDATE SET player1UUID = excluded.player1UUID, player2UUID = excluded.player2UUID"
              );
         ) {
             // clear database
@@ -151,7 +140,7 @@ public class Database
                 insertIgnoredPlayersStatement.setString(2, ignorePlayerCombo[1].toString());
                 insertIgnoredPlayersStatement.addBatch();
             }
-            insertIgnoredPlayersStatement.executeUpdate();
+            insertIgnoredPlayersStatement.executeBatch();
         }
         catch (SQLException e)
         {
@@ -161,36 +150,31 @@ public class Database
 
     public static void saveIgnoredLocations()
     {
-        Tattletail.log("saving ignored locations");
-
         if (Tattletail.getInstance().ignoreLocations.isEmpty())
             return;
-
-        Tattletail.log("not empty!");
 
         try (Connection conn = getConnection(Tattletail.getInstance());
              PreparedStatement deleteIgnoredLocationsStatement = conn.prepareStatement(
                      "DELETE FROM " + IGNORED_LOCATIONS_TABLE_NAME
              );
              PreparedStatement insertIgnoredLocationsStatement = conn.prepareStatement(
-                     "INSERT INTO " + IGNORED_LOCATIONS_TABLE_NAME + " (world, x, y, z) VALUES (?, ?, ?, ?)"
+                     "INSERT INTO " + IGNORED_LOCATIONS_TABLE_NAME + " (world, x, y, z) VALUES (?, ?, ?, ?)" +
+                             "ON CONFLICT(world, x, y, z) DO UPDATE SET world = excluded.world, x = excluded.x, y = excluded.y, z = excluded.z"
              );
         ) {
             // clear database
             deleteIgnoredLocationsStatement.executeUpdate();
-            Tattletail.log("old data removed");
 
             // fill table with new data
             for (Location ignoreLocation : Tattletail.getInstance().ignoreLocations)
             {
-                Tattletail.log("adding: " + ignoreLocation.getWorld().getName() + ": " + ignoreLocation.getBlockX() + " " + ignoreLocation.getBlockY() + " " + ignoreLocation.getBlockZ());
                 insertIgnoredLocationsStatement.setString(1, ignoreLocation.getWorld().getName());
                 insertIgnoredLocationsStatement.setInt(2, ignoreLocation.getBlockX());
                 insertIgnoredLocationsStatement.setInt(3, ignoreLocation.getBlockY());
                 insertIgnoredLocationsStatement.setInt(4, ignoreLocation.getBlockZ());
                 insertIgnoredLocationsStatement.addBatch();
             }
-            insertIgnoredLocationsStatement.executeUpdate();
+            insertIgnoredLocationsStatement.executeBatch();
         }
         catch (SQLException e)
         {
