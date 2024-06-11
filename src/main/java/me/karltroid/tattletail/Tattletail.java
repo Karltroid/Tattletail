@@ -46,7 +46,7 @@ public final class Tattletail extends JavaPlugin implements Listener
             Material.OAK_LEAVES, Material.OAK_LOG, Material.OAK_SAPLING, Material.SPRUCE_LEAVES, Material.SPRUCE_LOG, Material.SPRUCE_SAPLING, Material.BIRCH_LEAVES,
             Material.BIRCH_LOG, Material.BIRCH_SAPLING, Material.DARK_OAK_LEAVES, Material.DARK_OAK_LOG, Material.DARK_OAK_SAPLING, Material.JUNGLE_LEAVES, Material.JUNGLE_LOG, Material.JUNGLE_SAPLING,
             Material.ACACIA_LEAVES, Material.ACACIA_LOG, Material.ACACIA_SAPLING, Material.MANGROVE_LEAVES, Material.MANGROVE_LOG, Material.GRASS_BLOCK,
-            Material.SHORT_GRASS, Material.DIRT, Material.GRAVEL, Material.WHEAT, Material.CARROTS, Material.POTATOES, Material.SUGAR_CANE,
+            Material.SHORT_GRASS, Material.DIRT, Material.GRAVEL, Material.SAND, Material.WHEAT, Material.CARROTS, Material.POTATOES, Material.SUGAR_CANE,
             Material.BEETROOTS, Material.TALL_GRASS, Material.NETHERRACK, Material.SWEET_BERRY_BUSH, Material.WARPED_FUNGUS, Material.CRIMSON_FUNGUS
     );
 
@@ -176,6 +176,7 @@ public final class Tattletail extends JavaPlugin implements Listener
         }
 
         OfflinePlayer placedBy = this.getServer().getOfflinePlayer(result.getPlayer());
+        if (placedBy.getName() == null || placedBy.getName().toCharArray()[0] == '#') return;
         if (ignorePlayers(blockBreaker.getUniqueId(), placedBy.getUniqueId())) return;
         if (lastSuspect == blockBreaker.getUniqueId() && lastInnocent == placedBy.getUniqueId() && lastBlock == block.getType()) return;
 
@@ -207,22 +208,21 @@ public final class Tattletail extends JavaPlugin implements Listener
             else return;
         }
 
-        if (containerBlock.getType().equals(Material.AIR) || ignoreLocations.contains(containerBlock.getLocation())) return;
+        if (ignoreLocations.contains(containerBlock.getLocation())) return;
 
         List<String[]> lookupResult = coreProtect.blockLookup(containerBlock, 0);
-        if (lookupResult.isEmpty())
+
+        if (modernBeta != null && modernBeta.getFatChests().isDoubleChest(containerBlock.getType()))
         {
-            if (modernBeta != null && modernBeta.getFatChests().isDoubleChest(containerBlock.getType()))
+            List<Block> neighboringChests = modernBeta.getFatChests().getAdjacentChests(containerBlock);
+            if (!neighboringChests.isEmpty())
             {
-                List<Block> neighboringChests = modernBeta.getFatChests().getAdjacentChests(containerBlock);
-                if (neighboringChests.isEmpty()) return;
-
-                containerBlock = neighboringChests.get(0);
-                lookupResult = coreProtect.blockLookup(containerBlock, 0);
+                Block neighboringContainerBlock = neighboringChests.get(0);
+                lookupResult.addAll(coreProtect.blockLookup(neighboringContainerBlock, 0));
             }
+        }
 
-            if (lookupResult.isEmpty()) return;
-        };
+        if (lookupResult.isEmpty()) return;
 
         CoreProtectAPI.ParseResult result = null;
         for (int i = lookupResult.size() - 1; i >= 0; i--)
@@ -251,7 +251,18 @@ public final class Tattletail extends JavaPlugin implements Listener
         lastInnocent = chestOwner.getUniqueId();
         lastItem = itemStolen.getType();
 
-        alertAdmins(ChatColor.RED + "" + ChatColor.BOLD + thief.getName() + ChatColor.RED + " took " + ChatColor.BOLD + itemStolen.getAmount() + " " + itemStolenName + ChatColor.RED +  " from " + ChatColor.BOLD + chestOwner.getName() + "'s " + (modernBeta != null ? "chest" : result.getBlockData().getMaterial().name().toLowerCase().replaceAll("_", " ")) + ChatColor.GRAY + " [" + containerBlock.getX() + " " + containerBlock.getY() + " " + containerBlock.getZ() + "] ");
+        alertAdmins(ChatColor.RED + "" + ChatColor.BOLD + thief.getName() + ChatColor.RED + " took " + ChatColor.BOLD + itemStolen.getAmount() + " " + itemStolenName + ChatColor.RED +  " from " + ChatColor.BOLD + chestOwner.getName() + "'s " + (isModernBetaChest(containerBlock) ? "chest" : result.getBlockData().getMaterial().name().toLowerCase().replaceAll("_", " ")) + ChatColor.GRAY + " [" + containerBlock.getX() + " " + containerBlock.getY() + " " + containerBlock.getZ() + "] ");
+    }
+
+    boolean isModernBetaChest(Block block)
+    {
+        if (modernBeta == null) return false;
+
+        Material blockType = block.getType();
+        return switch (blockType) {
+            case BROWN_SHULKER_BOX, BLACK_SHULKER_BOX, WHITE_SHULKER_BOX -> true;
+            default -> false;
+        };
     }
 
     boolean isOldPlayer(String playerName)
