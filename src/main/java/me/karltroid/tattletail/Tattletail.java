@@ -130,7 +130,7 @@ public final class Tattletail extends JavaPlugin implements Listener
         lastItem = itemUsed.getType();
 
         Location pyromaniacLocation = pyromaniac.getLocation();
-        alertAdmins(ChatColor.RED + "" + ChatColor.BOLD + pyromaniac.getName() + ChatColor.RED + " used a " + ChatColor.BOLD + itemUsed.getType().name().toLowerCase().replaceAll("_", " ")  + ChatColor.GRAY + " [" + pyromaniacLocation.getBlockX() + " " + pyromaniacLocation.getBlockY() + " " + pyromaniacLocation.getBlockZ() + "] ");
+        alertAdmins(ChatColor.RED + "" + ChatColor.BOLD + pyromaniac.getName() + ChatColor.RED + " used a " + ChatColor.BOLD + itemUsed.getType().name().toLowerCase().replaceAll("_", " ")  + ChatColor.GRAY + " [" + pyromaniacLocation.getBlockX() + " " + pyromaniacLocation.getBlockY() + " " + pyromaniacLocation.getBlockZ() + (pyromaniac.getWorld().getName().contains("_nether") ? " (nether)]" : "]"));
     }
 
     @EventHandler
@@ -149,7 +149,7 @@ public final class Tattletail extends JavaPlugin implements Listener
         lastSuspect = blockPlacer.getUniqueId();
         lastBlock = blockType;
 
-        alertAdmins(ChatColor.RED + "" + ChatColor.BOLD + blockPlacer.getName() + ChatColor.RED + " placed a " + ChatColor.BOLD + blockType.name().toLowerCase().replaceAll("_", " ") + ChatColor.GRAY + " [" + block.getX() + " " + block.getY() + " " + block.getZ() + "] ");
+        alertAdmins(ChatColor.RED + "" + ChatColor.BOLD + blockPlacer.getName() + ChatColor.RED + " placed a " + ChatColor.BOLD + blockType.name().toLowerCase().replaceAll("_", " ") + ChatColor.GRAY + " [" + block.getX() + " " + block.getY() + " " + block.getZ() + (block.getWorld().getName().contains("_nether") ? " (nether)]" : "]"));
     }
 
     @EventHandler
@@ -184,7 +184,7 @@ public final class Tattletail extends JavaPlugin implements Listener
         lastInnocent = placedBy.getUniqueId();
         lastBlock = block.getType();
 
-        alertAdmins(ChatColor.RED + "" + ChatColor.BOLD + blockBreaker.getName() + ChatColor.RED + " broke a " + ChatColor.BOLD + block.getType().name().toLowerCase().replaceAll("_", " ") + ChatColor.RED + " placed by " + ChatColor.BOLD + placedBy.getName() + ChatColor.GRAY + " [" + block.getX() + " " + block.getY() + " " + block.getZ() + "] ");
+        alertAdmins(ChatColor.RED + "" + ChatColor.BOLD + blockBreaker.getName() + ChatColor.RED + " broke a " + ChatColor.BOLD + block.getType().name().toLowerCase().replaceAll("_", " ") + ChatColor.RED + " placed by " + ChatColor.BOLD + placedBy.getName() + ChatColor.GRAY + " [" + block.getX() + " " + block.getY() + " " + block.getZ() + (block.getWorld().getName().contains("_nether") ? " (nether)]" : "]"));
     }
 
     @EventHandler
@@ -251,7 +251,7 @@ public final class Tattletail extends JavaPlugin implements Listener
         lastInnocent = chestOwner.getUniqueId();
         lastItem = itemStolen.getType();
 
-        alertAdmins(ChatColor.RED + "" + ChatColor.BOLD + thief.getName() + ChatColor.RED + " took " + ChatColor.BOLD + itemStolen.getAmount() + " " + itemStolenName + ChatColor.RED +  " from " + ChatColor.BOLD + chestOwner.getName() + "'s " + (isModernBetaChest(containerBlock) ? "chest" : result.getBlockData().getMaterial().name().toLowerCase().replaceAll("_", " ")) + ChatColor.GRAY + " [" + containerBlock.getX() + " " + containerBlock.getY() + " " + containerBlock.getZ() + "] ");
+        alertAdmins(ChatColor.RED + "" + ChatColor.BOLD + thief.getName() + ChatColor.RED + " took " + ChatColor.BOLD + itemStolen.getAmount() + " " + itemStolenName + ChatColor.RED +  " from " + ChatColor.BOLD + chestOwner.getName() + "'s " + (isModernBetaChest(containerBlock) ? "chest" : result.getBlockData().getMaterial().name().toLowerCase().replaceAll("_", " ")) + ChatColor.GRAY + " [" + containerBlock.getX() + " " + containerBlock.getY() + " " + containerBlock.getZ() + (containerBlock.getWorld().getName().contains("_nether") ? " (nether)]" : "]"));
     }
 
     boolean isModernBetaChest(Block block)
