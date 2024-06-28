@@ -60,8 +60,10 @@ public final class Tattletail extends JavaPlugin implements Listener
 
 
     boolean testMode = false;
+    boolean modernBetaInstalled = false;
 
     CoreProtectAPI coreProtect;
+    DogKiller dogKiller = new DogKiller();
 
     @Override
     public void onEnable()
@@ -69,13 +71,18 @@ public final class Tattletail extends JavaPlugin implements Listener
         main = this; // set singleton instance of the plugin
 
         getServer().getPluginManager().registerEvents(this, this);
+        getServer().getPluginManager().registerEvents(dogKiller, this);
 
         coreProtect = getCoreProtect();
         if (coreProtect != null) // Ensure we have access to the API
             System.out.println("CoreProtect API found!");
 
         if (Bukkit.getServer().getPluginManager().getPlugin("ModernBeta") != null)
+        {
             modernBeta = ModernBeta.main;
+            modernBetaInstalled = true;
+        }
+
 
         if (Bukkit.getServer().getPluginManager().getPlugin("DiscordSRV") != null)
         {
@@ -117,7 +124,7 @@ public final class Tattletail extends JavaPlugin implements Listener
     public void onPlayerInteract(PlayerInteractEvent event)
     {
         Player pyromaniac = event.getPlayer();
-        if(isOldPlayer(pyromaniac.getName())) return;
+        if(isOldPlayer(pyromaniac.getUniqueId())) return;
 
         if (event.getAction() != Action.RIGHT_CLICK_BLOCK) return;
 
@@ -137,7 +144,7 @@ public final class Tattletail extends JavaPlugin implements Listener
     public void onBlockPlace(BlockPlaceEvent event)
     {
         Player blockPlacer = event.getPlayer();
-        if(isOldPlayer(blockPlacer.getName())) return;
+        if(isOldPlayer(blockPlacer.getUniqueId())) return;
 
         Block block = event.getBlock();
         Material blockType = block.getType();
@@ -159,7 +166,7 @@ public final class Tattletail extends JavaPlugin implements Listener
         if (IGNORE_TYPES.contains(block.getType()) || ignoreLocations.contains(block.getLocation())) return;
 
         Player blockBreaker = event.getPlayer();
-        if(isOldPlayer(blockBreaker.getName())) return;
+        if(isOldPlayer(blockBreaker.getUniqueId())) return;
 
         List<String[]> lookupResult = coreProtect.blockLookup(block, 0);
         if (lookupResult.isEmpty()) return;
@@ -194,7 +201,7 @@ public final class Tattletail extends JavaPlugin implements Listener
         if (clickedInventory == null || clickedInventory.getType() == InventoryType.PLAYER) return;
 
         Player thief = (Player) event.getWhoClicked();
-        if (isOldPlayer(thief.getName())) return;
+        if (isOldPlayer(thief.getUniqueId())) return;
 
         ItemStack itemStolen = event.getCurrentItem();
         if (itemStolen == null || itemStolen.getType() == Material.AIR) return;
@@ -256,7 +263,7 @@ public final class Tattletail extends JavaPlugin implements Listener
 
     boolean isModernBetaChest(Block block)
     {
-        if (modernBeta == null) return false;
+        if (!modernBetaInstalled) return false;
 
         Material blockType = block.getType();
         return switch (blockType) {
@@ -265,9 +272,9 @@ public final class Tattletail extends JavaPlugin implements Listener
         };
     }
 
-    boolean isOldPlayer(String playerName)
+    boolean isOldPlayer(UUID playerUUID)
     {
-        OfflinePlayer player = this.getServer().getOfflinePlayer(playerName);
+        OfflinePlayer player = this.getServer().getOfflinePlayer(playerUUID);
         if (!player.hasPlayedBefore()) return false;
 
         long playerAge = System.currentTimeMillis() - player.getFirstPlayed();
