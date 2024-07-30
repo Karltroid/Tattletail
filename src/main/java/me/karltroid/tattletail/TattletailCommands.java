@@ -35,6 +35,10 @@ public final class TattletailCommands implements CommandExecutor
         {
             return ignoreBlockCommand(sender, args);
         }
+        else if (args[0].equalsIgnoreCase("watch") || args[0].equalsIgnoreCase("unwatch"))
+        {
+            return watchPlayerCommand(sender, args);
+        }
 
         // if we got to this point, a valid sub command was not given.
         sender.sendMessage(ChatColor.RED + "\"/tattletail " + args[0] + "\" is not a valid sub command.");
@@ -143,6 +147,43 @@ public final class TattletailCommands implements CommandExecutor
 
             Tattletail.main.ignoreLocations.add(location);
             Tattletail.getInstance().alertAdmins(ChatColor.GREEN + "[+] Tattletail alerts that occur at [" + x + "," + y + "," + z + "] will now be ignored - set by " + getSenderName(sender));
+        }
+
+        return true;
+    }
+
+    private static boolean watchPlayerCommand(@NotNull CommandSender sender, String[] args) {
+
+        boolean unWatch = args[0].equalsIgnoreCase("unwatch");
+
+        if (args.length < 2)
+        {
+            sender.sendMessage(ChatColor.RED + "Usage: /tattletail " + (unWatch ? "unwatch" : "watch") + " <player>");
+            return false;
+        }
+
+        UUID playerUUID = Bukkit.getOfflinePlayer(args[1]).getUniqueId();
+        if (unWatch)
+        {
+            if (!Tattletail.main.watchPlayers.contains(playerUUID))
+            {
+                sender.sendMessage(ChatColor.RED + "This player is not being monitored already.");
+                return false;
+            }
+
+            Tattletail.main.watchPlayers.remove(playerUUID);
+            Tattletail.getInstance().alertAdmins(ChatColor.RED + "[-] " + ChatColor.GREEN + args[1] + " will no longer be monitored by Tattletail - set by " + getSenderName(sender));
+        }
+        else
+        {
+            if (Tattletail.main.watchPlayers.contains(playerUUID))
+            {
+                sender.sendMessage(ChatColor.RED + "This player is already being monitored.");
+                return false;
+            }
+
+            Tattletail.main.watchPlayers.add(playerUUID);
+            Tattletail.getInstance().alertAdmins(ChatColor.GREEN + "[+] " + args[1] +" will now be monitored - set by " + getSenderName(sender));
         }
 
         return true;

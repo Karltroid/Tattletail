@@ -41,6 +41,7 @@ public final class Tattletail extends JavaPlugin implements Listener
 
     public List<UUID[]> ignorePlayerCombos = new ArrayList<>();
     public List<Location> ignoreLocations = new ArrayList<>();
+    public List<UUID> watchPlayers = new ArrayList<>();
 
     private static final Set<Material> IGNORE_TYPES = ImmutableSet.of( // all item types that shouldn't be protected unless special
             Material.OAK_LEAVES, Material.OAK_LOG, Material.OAK_SAPLING, Material.SPRUCE_LEAVES, Material.SPRUCE_LOG, Material.SPRUCE_SAPLING, Material.BIRCH_LEAVES,
@@ -102,6 +103,7 @@ public final class Tattletail extends JavaPlugin implements Listener
         Database.createTables();
         Database.loadIgnoredLocations();
         Database.loadIgnoredPlayers();
+        Database.loadMonitoredPlayers();
 
         for (UUID[] uuid : Tattletail.getInstance().ignorePlayerCombos)
             Tattletail.log(uuid[0].toString() + " - " + uuid[1].toString());
@@ -118,22 +120,24 @@ public final class Tattletail extends JavaPlugin implements Listener
 
         Database.saveIgnoredLocations();
         Database.saveIgnoredPlayers();
+        Database.saveMonitoredPlayers();
     }
 
     @EventHandler
     public void onPlayerInteract(PlayerInteractEvent event)
     {
         Player pyromaniac = event.getPlayer();
-        if(isOldPlayer(pyromaniac.getUniqueId())) return;
+        UUID pyromaniacUUID = pyromaniac.getUniqueId();
+        if(isNotMonitored(pyromaniacUUID) && isOldPlayer(pyromaniacUUID)) return;
 
         if (event.getAction() != Action.RIGHT_CLICK_BLOCK) return;
 
         ItemStack itemUsed = event.getItem();
         if(itemUsed == null || !GRIEF_ITEM_TYPES.contains(event.getItem().getType())) return;
 
-        if (lastSuspect == pyromaniac.getUniqueId() && lastItem == itemUsed.getType()) return;
+        if (lastSuspect == pyromaniacUUID && lastItem == itemUsed.getType()) return;
 
-        lastSuspect = pyromaniac.getUniqueId();
+        lastSuspect = pyromaniacUUID;
         lastItem = itemUsed.getType();
 
         Location pyromaniacLocation = pyromaniac.getLocation();
@@ -144,7 +148,7 @@ public final class Tattletail extends JavaPlugin implements Listener
     public void onBlockPlace(BlockPlaceEvent event)
     {
         Player blockPlacer = event.getPlayer();
-        if(isOldPlayer(blockPlacer.getUniqueId())) return;
+        if(isNotMonitored(blockPlacer.getUniqueId()) && isOldPlayer(blockPlacer.getUniqueId())) return;
 
         Block block = event.getBlock();
         Material blockType = block.getType();
@@ -166,7 +170,7 @@ public final class Tattletail extends JavaPlugin implements Listener
         if (IGNORE_TYPES.contains(block.getType()) || ignoreLocations.contains(block.getLocation())) return;
 
         Player blockBreaker = event.getPlayer();
-        if(isOldPlayer(blockBreaker.getUniqueId())) return;
+        if(isNotMonitored(blockBreaker.getUniqueId()) && isOldPlayer(blockBreaker.getUniqueId())) return;
 
         List<String[]> lookupResult = coreProtect.blockLookup(block, 0);
         if (lookupResult.isEmpty()) return;
@@ -201,7 +205,7 @@ public final class Tattletail extends JavaPlugin implements Listener
         if (clickedInventory == null || clickedInventory.getType() == InventoryType.PLAYER) return;
 
         Player thief = (Player) event.getWhoClicked();
-        if (isOldPlayer(thief.getUniqueId())) return;
+        if (isNotMonitored(thief.getUniqueId()) && isOldPlayer(thief.getUniqueId())) return;
 
         ItemStack itemStolen = event.getCurrentItem();
         if (itemStolen == null || itemStolen.getType() == Material.AIR) return;
@@ -275,18 +279,27 @@ public final class Tattletail extends JavaPlugin implements Listener
     boolean isOldPlayer(UUID playerUUID)
     {
         OfflinePlayer player = this.getServer().getOfflinePlayer(playerUUID);
-        if (!player.hasPlayedBefore()) return false;
+        long firstPlayedTimeMillis = player.getFirstPlayed();
+        if (firstPlayedTimeMillis <= 0) return false;
 
-        long playerAge = System.currentTimeMillis() - player.getFirstPlayed();
+        long playerAge = System.currentTimeMillis() - firstPlayedTimeMillis;
         long playerAgeHours = TimeUnit.MILLISECONDS.toHours(playerAge);
 
         return playerAgeHours > oldPlayerHourAge && !testMode;
     }
 
+    boolean isNotMonitored(UUID playerUUID)
+    {
+        return !watchPlayers.contains(playerUUID);
+    }
+
     void alertAdmins(String alertMessage)
     {
         if (discordSRVInstalled)
+        {
+            Bukkit.getLogger().info("DISCORD");
             DiscordSRVHook.sendMessage(alertMessage);
+        }
 
         for (Player player : Bukkit.getServer().getOnlinePlayers()) {
             if (player.hasPermission("tattletail.admin"))

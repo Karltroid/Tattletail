@@ -18,6 +18,7 @@ public class Database
     static final String DATABASE_NAME = "database.db";
     static final String IGNORED_PLAYERS_TABLE_NAME = "ignored_players";
     static final String IGNORED_LOCATIONS_TABLE_NAME = "ignored_locations";
+    static final String MONITORED_PLAYERS_TABLE_NAME = "monitored_players";
 
     private static Connection getConnection(Plugin plugin) throws SQLException {
 
@@ -49,6 +50,12 @@ public class Database
                             + "y INT NOT NULL,"
                             + "z INT NOT NULL,"
                             + "PRIMARY KEY (world, x, y, z)"
+                            + ")"
+            );
+            stmt.executeUpdate(
+                    "CREATE TABLE IF NOT EXISTS " + MONITORED_PLAYERS_TABLE_NAME + " ("
+                            + "playerUUID VARCHAR(36) NOT NULL,"
+                            + "PRIMARY KEY (playerUUID)"
                             + ")"
             );
             Tattletail.log("Tables created successfully");
@@ -116,6 +123,33 @@ public class Database
         }
     }
 
+    public static void loadMonitoredPlayers()
+    {
+        try (Connection conn = getConnection(Tattletail.getInstance()))
+        {
+            try (PreparedStatement ignoredPlayersDataStatement = conn.prepareStatement("SELECT * FROM " + MONITORED_PLAYERS_TABLE_NAME))
+            {
+                try (ResultSet ignoredPlayerDataResult = ignoredPlayersDataStatement.executeQuery())
+                {
+                    Tattletail.getInstance().ignorePlayerCombos = new ArrayList<>();
+
+                    while (ignoredPlayerDataResult.next())
+                    {
+                        UUID playerUUID = UUID.fromString(ignoredPlayerDataResult.getString("playerUUID"));
+
+                        Tattletail.getInstance().watchPlayers.add(playerUUID);
+                    }
+
+                    Tattletail.log("Ignored players loaded successfully");
+                }
+            }
+        }
+        catch (SQLException e)
+        {
+            getLogger().severe("Failed to load data from database: " + e.getMessage());
+        }
+    }
+
     public static void saveIgnoredPlayers()
     {
         if (Tattletail.getInstance().ignorePlayerCombos.isEmpty())
@@ -141,6 +175,34 @@ public class Database
                 insertIgnoredPlayersStatement.addBatch();
             }
             insertIgnoredPlayersStatement.executeBatch();
+        }
+        catch (SQLException e)
+        {
+            getLogger().severe("Failed to save data to database: " + e.getMessage());
+        }
+    }
+
+    public static void saveMonitoredPlayers()
+    {
+        try (Connection conn = getConnection(Tattletail.getInstance());
+             PreparedStatement deleteMonitoredPlayersStatement = conn.prepareStatement(
+                     "DELETE FROM " + MONITORED_PLAYERS_TABLE_NAME
+             );
+             PreparedStatement insertMonitoredPlayersStatement = conn.prepareStatement(
+                     "INSERT INTO " + MONITORED_PLAYERS_TABLE_NAME + " (playerUUID) VALUES (?)" +
+                             "ON CONFLICT(playerUUID) DO UPDATE SET playerUUID = excluded.playerUUID"
+             );
+        ) {
+            // clear database
+            deleteMonitoredPlayersStatement.executeUpdate();
+
+            // fill table with new data
+            for (UUID watchPlayer : Tattletail.getInstance().watchPlayers)
+            {
+                insertMonitoredPlayersStatement.setString(1, watchPlayer.toString());
+                insertMonitoredPlayersStatement.addBatch();
+            }
+            insertMonitoredPlayersStatement.executeBatch();
         }
         catch (SQLException e)
         {

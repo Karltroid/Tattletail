@@ -18,7 +18,10 @@ public class DiscordSRVHook
     public void discordReadyEvent(DiscordReadyEvent event)
     {
         discordBroadcastTextChannel = DiscordSRV.getPlugin().getJda().getTextChannelById(Tattletail.getInstance().getPluginConfig().getString("DiscordLogChannelID", "1143007010049232896"));
-        Bukkit.getLogger().info("DiscordSRV Ready For TattleTail");
+        if (discordBroadcastTextChannel != null)
+            Bukkit.getLogger().info("DiscordSRV Ready For TattleTail");
+        else
+            Bukkit.getLogger().warning("DiscordSRV couldn't find channel for PremiumManager");
     }
 
 

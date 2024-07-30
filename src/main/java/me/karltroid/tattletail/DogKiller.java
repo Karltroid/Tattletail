@@ -46,7 +46,7 @@ public class DogKiller implements Listener
         if (dogAbusers.contains(killer))
         {
             dogAbusers.remove(killer);
-            Bukkit.getServer().dispatchCommand(Bukkit.getServer().getConsoleSender(), "ban " + killer.getName() + " " + (Tattletail.getInstance().isOldPlayer(killer.getUniqueId()) ? "1h" : "8h") + " [TattletailAutoBan] Killed an innocent dog, you monster. When an admin is available they will look into this and make a finalized punishment. If this was an accident please make a ticket on our Discord, https://discord.modernbeta.org");
+            Bukkit.getServer().dispatchCommand(Bukkit.getServer().getConsoleSender(), "ban -p " + killer.getName() + " " + (Tattletail.getInstance().isOldPlayer(killer.getUniqueId()) ? "1h" : "8h") + " [TattletailAutoBan] Killed an innocent dog, you monster. When an admin is available they will look into this and make a finalized punishment. If this was an accident please make a ticket on our Discord, https://discord.modernbeta.org");
         }
     }
 }
