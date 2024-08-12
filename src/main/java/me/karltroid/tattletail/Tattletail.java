@@ -1,6 +1,9 @@
 package me.karltroid.tattletail;
 
 import com.google.common.collect.ImmutableSet;
+import me.karltroid.tattletail.autobans.Arsonist;
+import me.karltroid.tattletail.autobans.DogKiller;
+import me.karltroid.tattletail.hooks.CoreProtectHook;
 import me.karltroid.tattletail.hooks.DiscordSRVHook;
 import org.bukkit.*;
 import org.bukkit.block.Block;
@@ -33,15 +36,16 @@ public final class Tattletail extends JavaPlugin implements Listener
 {
     static Tattletail main;
     private FileConfiguration config;
-    int oldPlayerHourAge; // how old the player needs to be in hours on the server to stop being tracked to avoid admin spam
+    static int oldPlayerHourAge; // how old the player needs to be in hours on the server to stop being tracked to avoid admin spam
     UUID lastSuspect = null, lastInnocent = null;
     Material lastBlock = null, lastItem = null;
     ModernBeta modernBeta;
     boolean discordSRVInstalled = false;
+    CoreProtectHook coreProtectHook;
 
-    public List<UUID[]> ignorePlayerCombos = new ArrayList<>();
-    public List<Location> ignoreLocations = new ArrayList<>();
-    public List<UUID> watchPlayers = new ArrayList<>();
+    public static List<UUID[]> ignorePlayerCombos = new ArrayList<>();
+    public static List<Location> ignoreLocations = new ArrayList<>();
+    public static List<UUID> watchPlayers = new ArrayList<>();
 
     private static final Set<Material> IGNORE_TYPES = ImmutableSet.of( // all item types that shouldn't be protected unless special
             Material.OAK_LEAVES, Material.OAK_LOG, Material.OAK_SAPLING, Material.SPRUCE_LEAVES, Material.SPRUCE_LOG, Material.SPRUCE_SAPLING, Material.BIRCH_LEAVES,
@@ -60,11 +64,12 @@ public final class Tattletail extends JavaPlugin implements Listener
     );
 
 
-    boolean testMode = false;
+    static boolean testMode = false;
     boolean modernBetaInstalled = false;
 
-    CoreProtectAPI coreProtect;
+
     DogKiller dogKiller = new DogKiller();
+    Arsonist arsonist = new Arsonist();
 
     @Override
     public void onEnable()
@@ -73,10 +78,7 @@ public final class Tattletail extends JavaPlugin implements Listener
 
         getServer().getPluginManager().registerEvents(this, this);
         getServer().getPluginManager().registerEvents(dogKiller, this);
-
-        coreProtect = getCoreProtect();
-        if (coreProtect != null) // Ensure we have access to the API
-            System.out.println("CoreProtect API found!");
+        getServer().getPluginManager().registerEvents(arsonist, this);
 
         if (Bukkit.getServer().getPluginManager().getPlugin("ModernBeta") != null)
         {
@@ -90,6 +92,8 @@ public final class Tattletail extends JavaPlugin implements Listener
             discordSRVInstalled = true;
             DiscordSRVHook.register();
         }
+
+        coreProtectHook = new CoreProtectHook();
 
         PluginCommand joinAgeCommand = getCommand("joinage");
         PluginCommand tattletailCommands = getCommand("tattletail");
@@ -172,22 +176,8 @@ public final class Tattletail extends JavaPlugin implements Listener
         Player blockBreaker = event.getPlayer();
         if(isNotMonitored(blockBreaker.getUniqueId()) && isOldPlayer(blockBreaker.getUniqueId())) return;
 
-        List<String[]> lookupResult = coreProtect.blockLookup(block, 0);
-        if (lookupResult.isEmpty()) return;
-
-        CoreProtectAPI.ParseResult result = null;
-        for (int i = lookupResult.size() - 1; i >= 0; i--) // loop from the beginning
-        {
-            result = coreProtect.parseResult(lookupResult.get(i));
-
-            if (result.getActionId() == 1 && result.getBlockData().getMaterial() == block.getType()) break;
-
-            if (i == 0)
-                return;
-        }
-
-        OfflinePlayer placedBy = this.getServer().getOfflinePlayer(result.getPlayer());
-        if (placedBy.getName() == null || placedBy.getName().toCharArray()[0] == '#') return;
+        OfflinePlayer placedBy = CoreProtectHook.getWhoOwnsBlock(block);
+        if (placedBy == null || placedBy.getName() == null || placedBy.getName().toCharArray()[0] == '#') return;
         if (ignorePlayers(blockBreaker.getUniqueId(), placedBy.getUniqueId())) return;
         if (lastSuspect == blockBreaker.getUniqueId() && lastInnocent == placedBy.getUniqueId() && lastBlock == block.getType()) return;
 
@@ -211,7 +201,7 @@ public final class Tattletail extends JavaPlugin implements Listener
         if (itemStolen == null || itemStolen.getType() == Material.AIR) return;
 
         Block containerBlock;
-        if (modernBeta != null) containerBlock = thief.getTargetBlock(null, 5);
+        if (modernBetaInstalled) containerBlock = thief.getTargetBlock(null, 5);
         else
         {
             if (event.getInventory().getHolder() instanceof Container container)
@@ -221,37 +211,9 @@ public final class Tattletail extends JavaPlugin implements Listener
 
         if (ignoreLocations.contains(containerBlock.getLocation())) return;
 
-        List<String[]> lookupResult = coreProtect.blockLookup(containerBlock, 0);
+        OfflinePlayer chestOwner = CoreProtectHook.getWhoOwnsBlock(containerBlock);
+        if (chestOwner == null) return;
 
-        if (modernBeta != null && modernBeta.getFatChests().isDoubleChest(containerBlock.getType()))
-        {
-            List<Block> neighboringChests = modernBeta.getFatChests().getAdjacentChests(containerBlock);
-            if (!neighboringChests.isEmpty())
-            {
-                Block neighboringContainerBlock = neighboringChests.get(0);
-                lookupResult.addAll(coreProtect.blockLookup(neighboringContainerBlock, 0));
-            }
-        }
-
-        if (lookupResult.isEmpty()) return;
-
-        CoreProtectAPI.ParseResult result = null;
-        for (int i = lookupResult.size() - 1; i >= 0; i--)
-        {
-            result = coreProtect.parseResult(lookupResult.get(i));
-            if (result == null) continue;
-
-            Material resultMaterial = result.getBlockData() != null ? result.getBlockData().getMaterial() : null;
-            if (resultMaterial == null) continue;
-
-            if (result.getActionId() == 1 && resultMaterial == containerBlock.getType()) break;
-
-            if (i == 0) return;
-        }
-
-        if (result == null) return;
-
-        OfflinePlayer chestOwner = this.getServer().getOfflinePlayer(result.getPlayer());
         if (ignorePlayers(thief.getUniqueId(), chestOwner.getUniqueId())) return;
 
         String itemStolenName = itemStolen.getType().name().toLowerCase().replaceAll("_", " ");
@@ -262,7 +224,7 @@ public final class Tattletail extends JavaPlugin implements Listener
         lastInnocent = chestOwner.getUniqueId();
         lastItem = itemStolen.getType();
 
-        alertAdmins(ChatColor.RED + "" + ChatColor.BOLD + thief.getName() + ChatColor.RED + " took " + ChatColor.BOLD + itemStolen.getAmount() + " " + itemStolenName + ChatColor.RED +  " from " + ChatColor.BOLD + chestOwner.getName() + "'s " + (isModernBetaChest(containerBlock) ? "chest" : result.getBlockData().getMaterial().name().toLowerCase().replaceAll("_", " ")) + ChatColor.GRAY + " [" + containerBlock.getX() + " " + containerBlock.getY() + " " + containerBlock.getZ() + (containerBlock.getWorld().getName().contains("_nether") ? " (nether)]" : "]"));
+        alertAdmins(ChatColor.RED + "" + ChatColor.BOLD + thief.getName() + ChatColor.RED + " took " + ChatColor.BOLD + itemStolen.getAmount() + " " + itemStolenName + ChatColor.RED +  " from " + ChatColor.BOLD + chestOwner.getName() + "'s " + (isModernBetaChest(containerBlock) ? "chest" : containerBlock.getType().name().toLowerCase().replaceAll("_", " ")) + ChatColor.GRAY + " [" + containerBlock.getX() + " " + containerBlock.getY() + " " + containerBlock.getZ() + (containerBlock.getWorld().getName().contains("_nether") ? " (nether)]" : "]"));
     }
 
     boolean isModernBetaChest(Block block)
@@ -276,9 +238,9 @@ public final class Tattletail extends JavaPlugin implements Listener
         };
     }
 
-    boolean isOldPlayer(UUID playerUUID)
+    public static boolean isOldPlayer(UUID playerUUID)
     {
-        OfflinePlayer player = this.getServer().getOfflinePlayer(playerUUID);
+        OfflinePlayer player = Bukkit.getOfflinePlayer(playerUUID);
         long firstPlayedTimeMillis = player.getFirstPlayed();
         if (firstPlayedTimeMillis <= 0) return false;
 
@@ -288,12 +250,12 @@ public final class Tattletail extends JavaPlugin implements Listener
         return playerAgeHours > oldPlayerHourAge && !testMode;
     }
 
-    boolean isNotMonitored(UUID playerUUID)
+    public static boolean isNotMonitored(UUID playerUUID)
     {
         return !watchPlayers.contains(playerUUID);
     }
 
-    void alertAdmins(String alertMessage)
+    public void alertAdmins(String alertMessage)
     {
         if (discordSRVInstalled)
         {
@@ -307,22 +269,7 @@ public final class Tattletail extends JavaPlugin implements Listener
         }
     }
 
-    private CoreProtectAPI getCoreProtect()
-    {
-        Plugin plugin = getServer().getPluginManager().getPlugin("CoreProtect");
 
-        // Check that CoreProtect is loaded
-        if (!(plugin instanceof CoreProtect)) return null;
-
-        // Check that the API is enabled
-        CoreProtectAPI CoreProtect = ((CoreProtect) plugin).getAPI();
-        if (!CoreProtect.isEnabled()) return null;
-
-        // Check that a compatible version of the API is loaded
-        if (CoreProtect.APIVersion() < 9) return null;
-
-        return CoreProtect;
-    }
 
     private FileConfiguration loadConfigFile(String fileName) {
         File configFile = new File(getDataFolder(), fileName);
@@ -334,7 +281,7 @@ public final class Tattletail extends JavaPlugin implements Listener
         return YamlConfiguration.loadConfiguration(configFile);
     }
 
-    private boolean ignorePlayers(UUID player1UUID, UUID player2UUID)
+    public static boolean ignorePlayers(UUID player1UUID, UUID player2UUID)
     {
         if (player1UUID == player2UUID) return true; // never alert for someone modifying their own stuff
 
@@ -342,14 +289,14 @@ public final class Tattletail extends JavaPlugin implements Listener
         return ignoredPlayer != null; // not null means it was found, so ignore them
     }
 
-    public UUID[] getIgnoredPlayer(UUID player1UUID, UUID player2UUID) {
+    public static UUID[] getIgnoredPlayer(UUID player1UUID, UUID player2UUID) {
         List<UUID[]> invalidsFound = new ArrayList<>();
 
         for (UUID[] ignorePlayerCombo : ignorePlayerCombos)
         {
             if (ignorePlayerCombo.length != 2)
             {
-                getLogger().info("Invalid ignorePlayerCombo, removing");
+                log("Invalid ignorePlayerCombo, removing");
                 invalidsFound.add(ignorePlayerCombo);
                 continue;
             }
@@ -375,4 +322,8 @@ public final class Tattletail extends JavaPlugin implements Listener
 
     public FileConfiguration getPluginConfig() { return config; }
     public static Tattletail getInstance(){ return main; }
+    public ModernBeta getModernBeta() { return modernBeta; }
+    public static void banPlayer(Player player, String reason) {
+        Bukkit.getServer().dispatchCommand(Bukkit.getServer().getConsoleSender(), "ban -p " + player.getName() + " " + (isOldPlayer(player.getUniqueId()) ? "30m" : "4h") + " [TattletailAutoBan] " + reason + " When an admin is available they will look into this and make a finalized punishment. If this was an accident please make a ticket on our Discord, https://discord.modernbeta.org");
+    }
 }

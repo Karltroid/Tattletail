@@ -1,5 +1,6 @@
-package me.karltroid.tattletail;
+package me.karltroid.tattletail.autobans;
 
+import me.karltroid.tattletail.Tattletail;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.AnimalTamer;
 import org.bukkit.entity.Player;
@@ -46,7 +47,7 @@ public class DogKiller implements Listener
         if (dogAbusers.contains(killer))
         {
             dogAbusers.remove(killer);
-            Bukkit.getServer().dispatchCommand(Bukkit.getServer().getConsoleSender(), "ban -p " + killer.getName() + " " + (Tattletail.getInstance().isOldPlayer(killer.getUniqueId()) ? "1h" : "8h") + " [TattletailAutoBan] Killed an innocent dog, you monster. When an admin is available they will look into this and make a finalized punishment. If this was an accident please make a ticket on our Discord, https://discord.modernbeta.org");
+            Tattletail.banPlayer(killer, "Killed an innocent dog, you monster.");
         }
     }
 }
