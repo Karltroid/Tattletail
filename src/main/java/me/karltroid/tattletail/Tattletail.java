@@ -22,10 +22,7 @@ import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
-import net.coreprotect.CoreProtect;
-import net.coreprotect.CoreProtectAPI;
 import org.modernbeta.modernbeta.ModernBeta;
 
 import java.io.File;
@@ -47,12 +44,12 @@ public final class Tattletail extends JavaPlugin implements Listener
     public static List<Location> ignoreLocations = new ArrayList<>();
     public static List<UUID> watchPlayers = new ArrayList<>();
 
-    private static final Set<Material> IGNORE_TYPES = ImmutableSet.of( // all item types that shouldn't be protected unless special
+    public static final Set<Material> IGNORE_TYPES = ImmutableSet.of( // all item types that shouldn't be protected unless special
             Material.OAK_LEAVES, Material.OAK_LOG, Material.OAK_SAPLING, Material.SPRUCE_LEAVES, Material.SPRUCE_LOG, Material.SPRUCE_SAPLING, Material.BIRCH_LEAVES,
             Material.BIRCH_LOG, Material.BIRCH_SAPLING, Material.DARK_OAK_LEAVES, Material.DARK_OAK_LOG, Material.DARK_OAK_SAPLING, Material.JUNGLE_LEAVES, Material.JUNGLE_LOG, Material.JUNGLE_SAPLING,
             Material.ACACIA_LEAVES, Material.ACACIA_LOG, Material.ACACIA_SAPLING, Material.MANGROVE_LEAVES, Material.MANGROVE_LOG, Material.GRASS_BLOCK,
             Material.SHORT_GRASS, Material.DIRT, Material.GRAVEL, Material.SAND, Material.WHEAT, Material.CARROTS, Material.POTATOES, Material.SUGAR_CANE,
-            Material.BEETROOTS, Material.TALL_GRASS, Material.NETHERRACK, Material.SWEET_BERRY_BUSH, Material.WARPED_FUNGUS, Material.CRIMSON_FUNGUS
+            Material.BEETROOTS, Material.TALL_GRASS, Material.NETHERRACK, Material.SWEET_BERRY_BUSH, Material.WARPED_FUNGUS, Material.CRIMSON_FUNGUS, Material.TORCH
     );
 
     private static final Set<Material> GRIEF_BLOCK_TYPES = ImmutableSet.of(
@@ -63,10 +60,8 @@ public final class Tattletail extends JavaPlugin implements Listener
             Material.FLINT_AND_STEEL, Material.FIRE_CHARGE, Material.TNT_MINECART, Material.LAVA_BUCKET
     );
 
-
     static boolean testMode = false;
     boolean modernBetaInstalled = false;
-
 
     DogKiller dogKiller = new DogKiller();
     Arsonist arsonist = new Arsonist();
@@ -192,7 +187,7 @@ public final class Tattletail extends JavaPlugin implements Listener
     public void onChestTake(InventoryClickEvent event)
     {
         Inventory clickedInventory = event.getClickedInventory();
-        if (clickedInventory == null || clickedInventory.getType() == InventoryType.PLAYER) return;
+        if (clickedInventory == null || clickedInventory.getType().equals(InventoryType.PLAYER) || clickedInventory.getType().equals(InventoryType.CRAFTING)) return;
 
         Player thief = (Player) event.getWhoClicked();
         if (isNotMonitored(thief.getUniqueId()) && isOldPlayer(thief.getUniqueId())) return;
@@ -201,7 +196,11 @@ public final class Tattletail extends JavaPlugin implements Listener
         if (itemStolen == null || itemStolen.getType() == Material.AIR) return;
 
         Block containerBlock;
-        if (modernBetaInstalled) containerBlock = thief.getTargetBlock(null, 5);
+        if (modernBetaInstalled) {
+            containerBlock = thief.getTargetBlock(null, 5);
+            if (!isModernBetaChest(containerBlock))
+                return;
+        }
         else
         {
             if (event.getInventory().getHolder() instanceof Container container)

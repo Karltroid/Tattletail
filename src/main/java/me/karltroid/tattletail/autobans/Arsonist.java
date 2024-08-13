@@ -10,6 +10,8 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.block.TNTPrimeEvent;
+import org.bukkit.event.player.PlayerBucketEmptyEvent;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.*;
@@ -18,18 +20,21 @@ public class Arsonist implements Listener {
 
     HashMap<Player, Integer> arsonistLikelihood = new HashMap<>();
     HashMap<Block, BukkitRunnable> toBeCheckedFires = new HashMap<>();
+    HashMap<Block, BukkitRunnable> toBeCheckedLavas = new HashMap<>();
 
     List<Material> manMadeBurnables = new ArrayList<>(Arrays.asList(
-            Material.OAK_PLANKS, Material.WHITE_WOOL, Material.BLACK_WOOL, Material.BLUE_WOOL, Material.BROWN_WOOL, Material.GREEN_WOOL, Material.CYAN_WOOL, Material.GRAY_WOOL, Material.LIGHT_BLUE_WOOL, Material.LIGHT_GRAY_WOOL, Material.LIME_WOOL, Material.MAGENTA_WOOL, Material.ORANGE_WOOL, Material.PINK_WOOL, Material.PURPLE_WOOL, Material.RED_WOOL, Material.YELLOW_WOOL
+            Material.OAK_PLANKS, Material.OAK_FENCE, Material.OAK_STAIRS, Material.WHITE_WOOL, Material.BLACK_WOOL, Material.BLUE_WOOL, Material.BROWN_WOOL, Material.GREEN_WOOL, Material.CYAN_WOOL, Material.GRAY_WOOL, Material.LIGHT_BLUE_WOOL, Material.LIGHT_GRAY_WOOL, Material.LIME_WOOL, Material.MAGENTA_WOOL, Material.ORANGE_WOOL, Material.PINK_WOOL, Material.PURPLE_WOOL, Material.RED_WOOL, Material.YELLOW_WOOL
     ));
 
-    void addToArsonistLikelihood(Player player) {
-        int newLikelihood = arsonistLikelihood.merge(player, 1, Integer::sum);
+    boolean addToArsonistLikelihood(Player player, int increase) {
+        int newLikelihood = arsonistLikelihood.merge(player, increase, Integer::sum);
 
         if (newLikelihood >= 5 && (!Tattletail.isOldPlayer(player.getUniqueId()) || !Tattletail.isNotMonitored(player.getUniqueId()))) {
             arsonistLikelihood.remove(player);
-            Tattletail.banPlayer(player, "Setting builds on fire that aren't yours repeatedly.");
+            return true;
         }
+
+        return false;
     }
 
     @EventHandler
@@ -43,7 +48,73 @@ public class Arsonist implements Listener {
         }
 
         Player potentialArsonist = event.getPlayer();
+        OfflinePlayer playerBeingGriefed = getWhoArsonIsBeingCommittedAgainst(fireBlock, potentialArsonist);
+        if (playerBeingGriefed == null || playerBeingGriefed.getName() == null) return;
 
+        // check some ticks later if the fire block still exists
+        BukkitRunnable checkFireTask = new BukkitRunnable() {
+            @Override
+            public void run() {
+                if (fireBlock.getType().equals(Material.FIRE)) {
+                    if (addToArsonistLikelihood(potentialArsonist, 1))
+                        Tattletail.banPlayer(potentialArsonist, "Setting builds on fire that aren't yours repeatedly.");
+                    Tattletail.getInstance().alertAdmins(ChatColor.RED + "" + ChatColor.BOLD + potentialArsonist.getName() + ChatColor.RED + " is burning down " + ChatColor.RED + "" + ChatColor.BOLD + playerBeingGriefed.getName() + "'s" + ChatColor.RED + " build! " + ChatColor.GRAY + " [" + fireBlock.getX() + " " + fireBlock.getY() + " " + fireBlock.getZ() + (fireBlock.getWorld().getName().contains("_nether") ? " (nether)]" : "]"));
+                }
+                // Remove from the HashMap after checking
+                toBeCheckedFires.remove(fireBlock);
+            }
+        };
+        checkFireTask.runTaskLater(Tattletail.getInstance(), 50);
+        toBeCheckedFires.put(fireBlock, checkFireTask);
+    }
+
+    @EventHandler
+    void onLavaPlaced(PlayerBucketEmptyEvent event) {
+
+        Block lavaBlock = event.getBlock();
+
+        // get if fire was placed
+        if(!event.getBucket().equals(Material.LAVA_BUCKET)) {
+            return;
+        }
+
+        Player potentialArsonist = event.getPlayer();
+        OfflinePlayer playerBeingGriefed = getWhoArsonIsBeingCommittedAgainst(lavaBlock, potentialArsonist);
+        if (playerBeingGriefed == null || playerBeingGriefed.getName() == null) return;
+
+        // check some ticks later if the fire block still exists
+        BukkitRunnable checkLavaTask = new BukkitRunnable() {
+            @Override
+            public void run() {
+                if (lavaBlock.getType().equals(Material.LAVA)) {
+                    if (addToArsonistLikelihood(potentialArsonist, 2))
+                        Tattletail.banPlayer(potentialArsonist, "Dumping lava on builds that aren't yours repeatedly.");
+                    Tattletail.getInstance().alertAdmins(ChatColor.RED + "" + ChatColor.BOLD + potentialArsonist.getName() + ChatColor.RED + " is dumping lava on " + ChatColor.RED + "" + ChatColor.BOLD + playerBeingGriefed.getName() + "'s" + ChatColor.RED + " build! " + ChatColor.GRAY + " [" + lavaBlock.getX() + " " + lavaBlock.getY() + " " + lavaBlock.getZ() + (lavaBlock.getWorld().getName().contains("_nether") ? " (nether)]" : "]"));
+                }
+                // Remove from the HashMap after checking
+                toBeCheckedLavas.remove(lavaBlock);
+            }
+        };
+        checkLavaTask.runTaskLater(Tattletail.getInstance(), 50);
+        toBeCheckedLavas.put(lavaBlock, checkLavaTask);
+    }
+
+    @EventHandler
+    void onTNTPrimed(TNTPrimeEvent event) {
+        Block tntBlock = event.getBlock();
+        Tattletail.log(tntBlock.getType().name() + " " + event.getPrimingEntity());
+        if (!(event.getPrimingEntity() instanceof Player player)) return;
+        
+        OfflinePlayer playerBeingGriefed = getWhoArsonIsBeingCommittedAgainst(tntBlock, player);
+        if (playerBeingGriefed.getName() == null) return;
+
+        if (addToArsonistLikelihood(player, 3))
+            Tattletail.banPlayer(player, "Exploding builds that aren't yours repeatedly.");
+        Tattletail.getInstance().alertAdmins(ChatColor.RED + "" + ChatColor.BOLD + player.getName() + ChatColor.RED + " is exploding " + ChatColor.RED + "" + ChatColor.BOLD + playerBeingGriefed.getName() + "'s" + ChatColor.RED + " build! " + ChatColor.GRAY + " [" + tntBlock.getX() + " " + tntBlock.getY() + " " + tntBlock.getZ() + (tntBlock.getWorld().getName().contains("_nether") ? " (nether)]" : "]"));
+
+    }
+
+    private OfflinePlayer getWhoArsonIsBeingCommittedAgainst(Block arsonBlock, Player potentialArsonist) {
         for (int x = -1; x <= 1; x++) {
             for (int y = -1; y <= 1; y++) {
                 for (int z = -1; z <= 1; z++) {
@@ -51,31 +122,19 @@ public class Arsonist implements Listener {
                     if (x == 0 && y == 0 && z == 0) continue;
 
                     // Get the neighboring block and check if it's a burnable material
-                    Block neighboringBlock = fireBlock.getRelative(x, y, z);
-                    if (!manMadeBurnables.contains(neighboringBlock.getType())) continue;
+                    Block neighboringBlock = arsonBlock.getRelative(x, y, z);
+                    if (Tattletail.IGNORE_TYPES.contains(neighboringBlock.getType())) continue;
+                    if (arsonBlock.getType().equals(Material.FIRE) && !manMadeBurnables.contains(neighboringBlock.getType())) continue;
 
                     OfflinePlayer blockOwner = CoreProtectHook.getWhoOwnsBlock(neighboringBlock);
                     if (blockOwner == null || blockOwner.getUniqueId().equals(potentialArsonist.getUniqueId()) || Tattletail.ignorePlayers(potentialArsonist.getUniqueId(), blockOwner.getUniqueId())) continue;
-
-                    // check some ticks later if the fire block still exists
-                    BukkitRunnable checkFireTask = new BukkitRunnable() {
-                        @Override
-                        public void run() {
-                            if (fireBlock.getType().equals(Material.FIRE)) {
-                                addToArsonistLikelihood(potentialArsonist);
-                                Tattletail.getInstance().alertAdmins(ChatColor.RED + "" + ChatColor.BOLD + potentialArsonist.getName() + ChatColor.RED + " is burning down " + ChatColor.RED + "" + ChatColor.BOLD + blockOwner.getName() + "'s" + ChatColor.RED + " build! " + ChatColor.GRAY + " [" + fireBlock.getX() + " " + fireBlock.getY() + " " + fireBlock.getZ() + (fireBlock.getWorld().getName().contains("_nether") ? " (nether)]" : "]"));
-                            }
-                            // Remove from the HashMap after checking
-                            toBeCheckedFires.remove(fireBlock);
-                        }
-                    };
-                    checkFireTask.runTaskLater(Tattletail.getInstance(), 50);
-                    toBeCheckedFires.put(fireBlock, checkFireTask);
-                    return; // stop search, we gottem 8)
+                    
+                    return blockOwner;
                 }
             }
         }
 
+        return null;
     }
 
 }
