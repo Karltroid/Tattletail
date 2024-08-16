@@ -8,6 +8,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.UUID;
 
+import static me.karltroid.tattletail.Tattletail.Staff.Admin;
+
 public final class TattletailCommands implements CommandExecutor
 {
     @Override
@@ -70,7 +72,7 @@ public final class TattletailCommands implements CommandExecutor
             else
             {
                 Tattletail.main.ignorePlayerCombos.remove(ignoredPlayer);
-                Tattletail.getInstance().alertAdmins(ChatColor.RED + "[-] " + ChatColor.GREEN + args[1] + " and " + args[2] + " will no longer be ignored when they steal or grief from each other. - set by " + getSenderName(sender));
+                Tattletail.getInstance().alertStaff(Admin, ChatColor.RED + "[-] " + ChatColor.GREEN + args[1] + " and " + args[2] + " will no longer be ignored when they steal or grief from each other. - set by " + getSenderName(sender));
                 return true;
             }
         }
@@ -84,7 +86,7 @@ public final class TattletailCommands implements CommandExecutor
             else
             {
                 Tattletail.main.ignorePlayerCombos.add(new UUID[]{player1.getUniqueId(), player2.getUniqueId()});
-                Tattletail.getInstance().alertAdmins(ChatColor.GREEN + "[+] " + args[1] + " and " + args[2] + " will now be ignored when they steal or grief from each other. - set by " + getSenderName(sender));
+                Tattletail.getInstance().alertStaff(Admin, ChatColor.GREEN + "[+] " + args[1] + " and " + args[2] + " will now be ignored when they steal or grief from each other. - set by " + getSenderName(sender));
                 return true;
             }
         }
@@ -135,7 +137,7 @@ public final class TattletailCommands implements CommandExecutor
             }
 
             Tattletail.main.ignoreLocations.remove(location);
-            Tattletail.getInstance().alertAdmins(ChatColor.RED + "[-] " + ChatColor.GREEN + "Tattletail alerts that occur at [" + x + "," + y + "," + z + "] will no longer be ignored - set by " + getSenderName(sender));
+            Tattletail.getInstance().alertStaff(Admin, ChatColor.RED + "[-] " + ChatColor.GREEN + "Tattletail alerts that occur at [" + x + "," + y + "," + z + "] will no longer be ignored - set by " + getSenderName(sender));
         }
         else
         {
@@ -146,7 +148,7 @@ public final class TattletailCommands implements CommandExecutor
             }
 
             Tattletail.main.ignoreLocations.add(location);
-            Tattletail.getInstance().alertAdmins(ChatColor.GREEN + "[+] Tattletail alerts that occur at [" + x + "," + y + "," + z + "] will now be ignored - set by " + getSenderName(sender));
+            Tattletail.getInstance().alertStaff(Admin, ChatColor.GREEN + "[+] Tattletail alerts that occur at [" + x + "," + y + "," + z + "] will now be ignored - set by " + getSenderName(sender));
         }
 
         return true;
@@ -172,7 +174,7 @@ public final class TattletailCommands implements CommandExecutor
             }
 
             Tattletail.main.watchPlayers.remove(playerUUID);
-            Tattletail.getInstance().alertAdmins(ChatColor.RED + "[-] " + ChatColor.GREEN + args[1] + " will no longer be monitored by Tattletail - set by " + getSenderName(sender));
+            Tattletail.getInstance().alertStaff(Admin, ChatColor.RED + "[-] " + ChatColor.GREEN + args[1] + " will no longer be monitored by Tattletail - set by " + getSenderName(sender));
         }
         else
         {
@@ -183,7 +185,7 @@ public final class TattletailCommands implements CommandExecutor
             }
 
             Tattletail.main.watchPlayers.add(playerUUID);
-            Tattletail.getInstance().alertAdmins(ChatColor.GREEN + "[+] " + args[1] +" will now be monitored - set by " + getSenderName(sender));
+            Tattletail.getInstance().alertStaff(Admin, ChatColor.GREEN + "[+] " + args[1] +" will now be monitored - set by " + getSenderName(sender));
         }
 
         return true;

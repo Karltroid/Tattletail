@@ -29,6 +29,9 @@ import java.io.File;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
+import static me.karltroid.tattletail.Tattletail.Staff.Admin;
+import static me.karltroid.tattletail.Tattletail.Staff.Mod;
+
 public final class Tattletail extends JavaPlugin implements Listener
 {
     static Tattletail main;
@@ -65,6 +68,11 @@ public final class Tattletail extends JavaPlugin implements Listener
 
     DogKiller dogKiller = new DogKiller();
     Arsonist arsonist = new Arsonist();
+
+    public enum Staff {
+        Admin,
+        Mod
+    }
 
     @Override
     public void onEnable()
@@ -140,7 +148,7 @@ public final class Tattletail extends JavaPlugin implements Listener
         lastItem = itemUsed.getType();
 
         Location pyromaniacLocation = pyromaniac.getLocation();
-        alertAdmins(ChatColor.RED + "" + ChatColor.BOLD + pyromaniac.getName() + ChatColor.RED + " used a " + ChatColor.BOLD + itemUsed.getType().name().toLowerCase().replaceAll("_", " ")  + ChatColor.GRAY + " [" + pyromaniacLocation.getBlockX() + " " + pyromaniacLocation.getBlockY() + " " + pyromaniacLocation.getBlockZ() + (pyromaniac.getWorld().getName().contains("_nether") ? " (nether)]" : "]"));
+        alertStaff(Mod, ChatColor.RED + "" + ChatColor.BOLD + pyromaniac.getName() + ChatColor.RED + " used a " + ChatColor.BOLD + itemUsed.getType().name().toLowerCase().replaceAll("_", " ")  + ChatColor.GRAY + " [" + pyromaniacLocation.getBlockX() + " " + pyromaniacLocation.getBlockY() + " " + pyromaniacLocation.getBlockZ() + (pyromaniac.getWorld().getName().contains("_nether") ? " (nether)]" : "]"));
     }
 
     @EventHandler
@@ -159,7 +167,7 @@ public final class Tattletail extends JavaPlugin implements Listener
         lastSuspect = blockPlacer.getUniqueId();
         lastBlock = blockType;
 
-        alertAdmins(ChatColor.RED + "" + ChatColor.BOLD + blockPlacer.getName() + ChatColor.RED + " placed a " + ChatColor.BOLD + blockType.name().toLowerCase().replaceAll("_", " ") + ChatColor.GRAY + " [" + block.getX() + " " + block.getY() + " " + block.getZ() + (block.getWorld().getName().contains("_nether") ? " (nether)]" : "]"));
+        alertStaff(Mod, ChatColor.RED + "" + ChatColor.BOLD + blockPlacer.getName() + ChatColor.RED + " placed a " + ChatColor.BOLD + blockType.name().toLowerCase().replaceAll("_", " ") + ChatColor.GRAY + " [" + block.getX() + " " + block.getY() + " " + block.getZ() + (block.getWorld().getName().contains("_nether") ? " (nether)]" : "]"));
     }
 
     @EventHandler
@@ -180,7 +188,7 @@ public final class Tattletail extends JavaPlugin implements Listener
         lastInnocent = placedBy.getUniqueId();
         lastBlock = block.getType();
 
-        alertAdmins(ChatColor.RED + "" + ChatColor.BOLD + blockBreaker.getName() + ChatColor.RED + " broke a " + ChatColor.BOLD + block.getType().name().toLowerCase().replaceAll("_", " ") + ChatColor.RED + " placed by " + ChatColor.BOLD + placedBy.getName() + ChatColor.GRAY + " [" + block.getX() + " " + block.getY() + " " + block.getZ() + (block.getWorld().getName().contains("_nether") ? " (nether)]" : "]"));
+        alertStaff(Mod, ChatColor.RED + "" + ChatColor.BOLD + blockBreaker.getName() + ChatColor.RED + " broke a " + ChatColor.BOLD + block.getType().name().toLowerCase().replaceAll("_", " ") + ChatColor.RED + " placed by " + ChatColor.BOLD + placedBy.getName() + ChatColor.GRAY + " [" + block.getX() + " " + block.getY() + " " + block.getZ() + (block.getWorld().getName().contains("_nether") ? " (nether)]" : "]"));
     }
 
     @EventHandler
@@ -223,7 +231,7 @@ public final class Tattletail extends JavaPlugin implements Listener
         lastInnocent = chestOwner.getUniqueId();
         lastItem = itemStolen.getType();
 
-        alertAdmins(ChatColor.RED + "" + ChatColor.BOLD + thief.getName() + ChatColor.RED + " took " + ChatColor.BOLD + itemStolen.getAmount() + " " + itemStolenName + ChatColor.RED +  " from " + ChatColor.BOLD + chestOwner.getName() + "'s " + (isModernBetaChest(containerBlock) ? "chest" : containerBlock.getType().name().toLowerCase().replaceAll("_", " ")) + ChatColor.GRAY + " [" + containerBlock.getX() + " " + containerBlock.getY() + " " + containerBlock.getZ() + (containerBlock.getWorld().getName().contains("_nether") ? " (nether)]" : "]"));
+        alertStaff(Admin, ChatColor.RED + "" + ChatColor.BOLD + thief.getName() + ChatColor.RED + " took " + ChatColor.BOLD + itemStolen.getAmount() + " " + itemStolenName + ChatColor.RED +  " from " + ChatColor.BOLD + chestOwner.getName() + "'s " + (isModernBetaChest(containerBlock) ? "chest" : containerBlock.getType().name().toLowerCase().replaceAll("_", " ")) + ChatColor.GRAY + " [" + containerBlock.getX() + " " + containerBlock.getY() + " " + containerBlock.getZ() + (containerBlock.getWorld().getName().contains("_nether") ? " (nether)]" : "]"));
     }
 
     boolean isModernBetaChest(Block block)
@@ -254,21 +262,23 @@ public final class Tattletail extends JavaPlugin implements Listener
         return !watchPlayers.contains(playerUUID);
     }
 
-    public void alertAdmins(String alertMessage)
+    public void alertStaff(Staff staffType, String alertMessage)
     {
-        if (discordSRVInstalled)
-        {
-            Bukkit.getLogger().info("DISCORD");
-            DiscordSRVHook.sendMessage(alertMessage);
+        // alert admins and mods (if requested) on discord
+        if (discordSRVInstalled) {
+            DiscordSRVHook.sendMessage(DiscordSRVHook.discordAdminBroadcastTextChannel, alertMessage);
+            if (staffType.equals(Mod))
+                DiscordSRVHook.sendMessage(DiscordSRVHook.discordModBroadcastTextChannel, alertMessage);
         }
 
+        // alert admins and mods (if requested) in Minecraft
         for (Player player : Bukkit.getServer().getOnlinePlayers()) {
             if (player.hasPermission("tattletail.admin"))
                 player.sendMessage(alertMessage);
+            else if (staffType.equals(Mod) && player.hasPermission("tattletail.mod"))
+                player.sendMessage(alertMessage);
         }
     }
-
-
 
     private FileConfiguration loadConfigFile(String fileName) {
         File configFile = new File(getDataFolder(), fileName);

@@ -11,27 +11,26 @@ import org.bukkit.ChatColor;
 public class DiscordSRVHook
 {
     private static final DiscordSRVHook instance = new DiscordSRVHook();
-    private TextChannel discordBroadcastTextChannel;
+    public static TextChannel discordAdminBroadcastTextChannel;
+    public static TextChannel discordModBroadcastTextChannel;
     private DiscordSRVHook() {}
 
     @Subscribe
     public void discordReadyEvent(DiscordReadyEvent event)
     {
-        discordBroadcastTextChannel = DiscordSRV.getPlugin().getJda().getTextChannelById(Tattletail.getInstance().getPluginConfig().getString("DiscordLogChannelID", "1143007010049232896"));
-        if (discordBroadcastTextChannel != null)
+        discordAdminBroadcastTextChannel = DiscordSRV.getPlugin().getJda().getTextChannelById(Tattletail.getInstance().getPluginConfig().getString("DiscordAdminLogChannelID", "1143007010049232896"));
+        discordModBroadcastTextChannel = DiscordSRV.getPlugin().getJda().getTextChannelById(Tattletail.getInstance().getPluginConfig().getString("DiscordModLogChannelID", "1143007010049232896"));
+        if (discordAdminBroadcastTextChannel != null)
             Bukkit.getLogger().info("DiscordSRV Ready For TattleTail");
         else
             Bukkit.getLogger().warning("DiscordSRV couldn't find channel for PremiumManager");
     }
 
 
-    public static void sendMessage(String message)
+    public static void sendMessage(TextChannel textChannel, String message)
     {
-        if (instance.discordBroadcastTextChannel != null)
-        {
-            instance.discordBroadcastTextChannel.sendMessage(ChatColor.stripColor(message)).complete();
-        }
-
+        if (textChannel != null)
+            textChannel.sendMessage(ChatColor.stripColor(message)).complete();
     }
 
     public static void register()

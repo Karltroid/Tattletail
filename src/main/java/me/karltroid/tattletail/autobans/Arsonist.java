@@ -16,6 +16,8 @@ import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.*;
 
+import static me.karltroid.tattletail.Tattletail.Staff.Mod;
+
 public class Arsonist implements Listener {
 
     HashMap<Player, Integer> arsonistLikelihood = new HashMap<>();
@@ -58,7 +60,7 @@ public class Arsonist implements Listener {
                 if (fireBlock.getType().equals(Material.FIRE)) {
                     if (addToArsonistLikelihood(potentialArsonist, 1))
                         Tattletail.banPlayer(potentialArsonist, "Setting builds on fire that aren't yours repeatedly.");
-                    Tattletail.getInstance().alertAdmins(ChatColor.RED + "" + ChatColor.BOLD + potentialArsonist.getName() + ChatColor.RED + " is burning down " + ChatColor.RED + "" + ChatColor.BOLD + playerBeingGriefed.getName() + "'s" + ChatColor.RED + " build! " + ChatColor.GRAY + " [" + fireBlock.getX() + " " + fireBlock.getY() + " " + fireBlock.getZ() + (fireBlock.getWorld().getName().contains("_nether") ? " (nether)]" : "]"));
+                    Tattletail.getInstance().alertStaff(Mod, ChatColor.RED + "" + ChatColor.BOLD + potentialArsonist.getName() + ChatColor.RED + " is burning down " + ChatColor.RED + "" + ChatColor.BOLD + playerBeingGriefed.getName() + "'s" + ChatColor.RED + " build! " + ChatColor.GRAY + " [" + fireBlock.getX() + " " + fireBlock.getY() + " " + fireBlock.getZ() + (fireBlock.getWorld().getName().contains("_nether") ? " (nether)]" : "]"));
                 }
                 // Remove from the HashMap after checking
                 toBeCheckedFires.remove(fireBlock);
@@ -80,7 +82,7 @@ public class Arsonist implements Listener {
 
         Player potentialArsonist = event.getPlayer();
         OfflinePlayer playerBeingGriefed = getWhoArsonIsBeingCommittedAgainst(lavaBlock, potentialArsonist);
-        if (playerBeingGriefed == null || playerBeingGriefed.getName() == null) return;
+        if (playerBeingGriefed == null || playerBeingGriefed.getName() == null || playerBeingGriefed.getName().toCharArray()[0] == '#') return;
 
         // check some ticks later if the fire block still exists
         BukkitRunnable checkLavaTask = new BukkitRunnable() {
@@ -89,7 +91,7 @@ public class Arsonist implements Listener {
                 if (lavaBlock.getType().equals(Material.LAVA)) {
                     if (addToArsonistLikelihood(potentialArsonist, 2))
                         Tattletail.banPlayer(potentialArsonist, "Dumping lava on builds that aren't yours repeatedly.");
-                    Tattletail.getInstance().alertAdmins(ChatColor.RED + "" + ChatColor.BOLD + potentialArsonist.getName() + ChatColor.RED + " is dumping lava on " + ChatColor.RED + "" + ChatColor.BOLD + playerBeingGriefed.getName() + "'s" + ChatColor.RED + " build! " + ChatColor.GRAY + " [" + lavaBlock.getX() + " " + lavaBlock.getY() + " " + lavaBlock.getZ() + (lavaBlock.getWorld().getName().contains("_nether") ? " (nether)]" : "]"));
+                    Tattletail.getInstance().alertStaff(Mod, ChatColor.RED + "" + ChatColor.BOLD + potentialArsonist.getName() + ChatColor.RED + " is dumping lava on " + ChatColor.RED + "" + ChatColor.BOLD + playerBeingGriefed.getName() + "'s" + ChatColor.RED + " build! " + ChatColor.GRAY + " [" + lavaBlock.getX() + " " + lavaBlock.getY() + " " + lavaBlock.getZ() + (lavaBlock.getWorld().getName().contains("_nether") ? " (nether)]" : "]"));
                 }
                 // Remove from the HashMap after checking
                 toBeCheckedLavas.remove(lavaBlock);
@@ -110,7 +112,7 @@ public class Arsonist implements Listener {
 
         if (addToArsonistLikelihood(player, 3))
             Tattletail.banPlayer(player, "Exploding builds that aren't yours repeatedly.");
-        Tattletail.getInstance().alertAdmins(ChatColor.RED + "" + ChatColor.BOLD + player.getName() + ChatColor.RED + " is exploding " + ChatColor.RED + "" + ChatColor.BOLD + playerBeingGriefed.getName() + "'s" + ChatColor.RED + " build! " + ChatColor.GRAY + " [" + tntBlock.getX() + " " + tntBlock.getY() + " " + tntBlock.getZ() + (tntBlock.getWorld().getName().contains("_nether") ? " (nether)]" : "]"));
+        Tattletail.getInstance().alertStaff(Mod, ChatColor.RED + "" + ChatColor.BOLD + player.getName() + ChatColor.RED + " is exploding " + ChatColor.RED + "" + ChatColor.BOLD + playerBeingGriefed.getName() + "'s" + ChatColor.RED + " build! " + ChatColor.GRAY + " [" + tntBlock.getX() + " " + tntBlock.getY() + " " + tntBlock.getZ() + (tntBlock.getWorld().getName().contains("_nether") ? " (nether)]" : "]"));
 
     }
 
