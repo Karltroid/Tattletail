@@ -3,6 +3,7 @@ package me.karltroid.tattletail;
 import com.google.common.collect.ImmutableSet;
 import me.karltroid.tattletail.autobans.Arsonist;
 import me.karltroid.tattletail.autobans.DogKiller;
+import me.karltroid.tattletail.commands.TattletailCommand;
 import me.karltroid.tattletail.hooks.CoreProtectHook;
 import me.karltroid.tattletail.hooks.DiscordSRVHook;
 import org.bukkit.*;
@@ -101,7 +102,7 @@ public final class Tattletail extends JavaPlugin implements Listener
         PluginCommand joinAgeCommand = getCommand("joinage");
         PluginCommand tattletailCommands = getCommand("tattletail");
         if (joinAgeCommand != null) joinAgeCommand.setExecutor(new JoinAgeCommand());
-        if (joinAgeCommand != null) tattletailCommands.setExecutor(new TattletailCommands());
+        if (joinAgeCommand != null) tattletailCommands.setExecutor(new TattletailCommand());
 
         config = loadConfigFile("config.yml");
 

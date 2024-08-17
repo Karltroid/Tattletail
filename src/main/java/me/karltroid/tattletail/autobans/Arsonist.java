@@ -104,11 +104,10 @@ public class Arsonist implements Listener {
     @EventHandler
     void onTNTPrimed(TNTPrimeEvent event) {
         Block tntBlock = event.getBlock();
-        Tattletail.log(tntBlock.getType().name() + " " + event.getPrimingEntity());
         if (!(event.getPrimingEntity() instanceof Player player)) return;
         
         OfflinePlayer playerBeingGriefed = getWhoArsonIsBeingCommittedAgainst(tntBlock, player);
-        if (playerBeingGriefed.getName() == null) return;
+        if (playerBeingGriefed == null || playerBeingGriefed.getName() == null) return;
 
         if (addToArsonistLikelihood(player, 3))
             Tattletail.banPlayer(player, "Exploding builds that aren't yours repeatedly.");

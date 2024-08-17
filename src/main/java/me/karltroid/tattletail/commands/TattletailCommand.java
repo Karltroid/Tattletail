@@ -1,4 +1,5 @@
-package me.karltroid.tattletail;
+package me.karltroid.tattletail.commands;
+import me.karltroid.tattletail.Tattletail;
 import org.bukkit.*;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -10,7 +11,7 @@ import java.util.UUID;
 
 import static me.karltroid.tattletail.Tattletail.Staff.Admin;
 
-public final class TattletailCommands implements CommandExecutor
+public final class TattletailCommand implements CommandExecutor
 {
     @Override
     public boolean onCommand(@NotNull CommandSender sender, Command cmd, @NotNull String label, String[] args)
@@ -60,7 +61,7 @@ public final class TattletailCommands implements CommandExecutor
         OfflinePlayer player1 = Bukkit.getOfflinePlayer(args[1]);
         OfflinePlayer player2 = Bukkit.getOfflinePlayer(args[2]);
 
-        UUID[] ignoredPlayer = Tattletail.main.getIgnoredPlayer(player1.getUniqueId(), player2.getUniqueId());
+        UUID[] ignoredPlayer = Tattletail.getInstance().getIgnoredPlayer(player1.getUniqueId(), player2.getUniqueId());
 
         if (unIgnore)
         {
@@ -71,7 +72,7 @@ public final class TattletailCommands implements CommandExecutor
             }
             else
             {
-                Tattletail.main.ignorePlayerCombos.remove(ignoredPlayer);
+                Tattletail.getInstance().ignorePlayerCombos.remove(ignoredPlayer);
                 Tattletail.getInstance().alertStaff(Admin, ChatColor.RED + "[-] " + ChatColor.GREEN + args[1] + " and " + args[2] + " will no longer be ignored when they steal or grief from each other. - set by " + getSenderName(sender));
                 return true;
             }
@@ -85,7 +86,7 @@ public final class TattletailCommands implements CommandExecutor
             }
             else
             {
-                Tattletail.main.ignorePlayerCombos.add(new UUID[]{player1.getUniqueId(), player2.getUniqueId()});
+                Tattletail.getInstance().ignorePlayerCombos.add(new UUID[]{player1.getUniqueId(), player2.getUniqueId()});
                 Tattletail.getInstance().alertStaff(Admin, ChatColor.GREEN + "[+] " + args[1] + " and " + args[2] + " will now be ignored when they steal or grief from each other. - set by " + getSenderName(sender));
                 return true;
             }
@@ -130,24 +131,24 @@ public final class TattletailCommands implements CommandExecutor
         Location location = new Location(world, x, y, z);
         if (unIgnore)
         {
-            if (!Tattletail.main.ignoreLocations.contains(location))
+            if (!Tattletail.getInstance().ignoreLocations.contains(location))
             {
                 sender.sendMessage(ChatColor.RED + "This block location is not being ignored already.");
                 return false;
             }
 
-            Tattletail.main.ignoreLocations.remove(location);
+            Tattletail.getInstance().ignoreLocations.remove(location);
             Tattletail.getInstance().alertStaff(Admin, ChatColor.RED + "[-] " + ChatColor.GREEN + "Tattletail alerts that occur at [" + x + "," + y + "," + z + "] will no longer be ignored - set by " + getSenderName(sender));
         }
         else
         {
-            if (Tattletail.main.ignoreLocations.contains(location))
+            if (Tattletail.getInstance().ignoreLocations.contains(location))
             {
                 sender.sendMessage(ChatColor.RED + "This block location is already being ignored.");
                 return false;
             }
 
-            Tattletail.main.ignoreLocations.add(location);
+            Tattletail.getInstance().ignoreLocations.add(location);
             Tattletail.getInstance().alertStaff(Admin, ChatColor.GREEN + "[+] Tattletail alerts that occur at [" + x + "," + y + "," + z + "] will now be ignored - set by " + getSenderName(sender));
         }
 
@@ -167,24 +168,24 @@ public final class TattletailCommands implements CommandExecutor
         UUID playerUUID = Bukkit.getOfflinePlayer(args[1]).getUniqueId();
         if (unWatch)
         {
-            if (!Tattletail.main.watchPlayers.contains(playerUUID))
+            if (!Tattletail.getInstance().watchPlayers.contains(playerUUID))
             {
                 sender.sendMessage(ChatColor.RED + "This player is not being monitored already.");
                 return false;
             }
 
-            Tattletail.main.watchPlayers.remove(playerUUID);
+            Tattletail.getInstance().watchPlayers.remove(playerUUID);
             Tattletail.getInstance().alertStaff(Admin, ChatColor.RED + "[-] " + ChatColor.GREEN + args[1] + " will no longer be monitored by Tattletail - set by " + getSenderName(sender));
         }
         else
         {
-            if (Tattletail.main.watchPlayers.contains(playerUUID))
+            if (Tattletail.getInstance().watchPlayers.contains(playerUUID))
             {
                 sender.sendMessage(ChatColor.RED + "This player is already being monitored.");
                 return false;
             }
 
-            Tattletail.main.watchPlayers.add(playerUUID);
+            Tattletail.getInstance().watchPlayers.add(playerUUID);
             Tattletail.getInstance().alertStaff(Admin, ChatColor.GREEN + "[+] " + args[1] +" will now be monitored - set by " + getSenderName(sender));
         }
 
