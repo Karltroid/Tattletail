@@ -22,6 +22,9 @@ public class DiscordSRVHook
     @Subscribe
     public void discordReadyEvent(DiscordReadyEvent event)
     {
+        discordAdminBroadcastTextChannel = DiscordSRV.getPlugin().getDestinationTextChannelForGameChannelName(DISCORD_ADMIN_CHANNEL);
+        discordModBroadcastTextChannel = DiscordSRV.getPlugin().getDestinationTextChannelForGameChannelName(DISCORD_MOD_CHANNEL);
+
         if (discordAdminBroadcastTextChannel != null && discordModBroadcastTextChannel != null)
             Bukkit.getLogger().info("DiscordSRV Ready For TattleTail");
         else {
@@ -30,12 +33,6 @@ public class DiscordSRVHook
             Bukkit.getLogger().warning("DiscordSRV couldn't find textchannel, disabling connection");
         }
     }
-
-    public Boolean isDiscordChannelValid(String channelName)
-    {
-        return DiscordSRV.getPlugin().getDestinationTextChannelForGameChannelName(channelName) != null;
-    }
-
 
     public static void sendMessage(TextChannel textChannel, String message)
     {
