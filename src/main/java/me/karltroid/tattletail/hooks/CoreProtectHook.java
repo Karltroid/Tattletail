@@ -58,20 +58,6 @@ public class CoreProtectHook {
 
         if (result.getPlayer().toCharArray()[0] == '#') return null;
 
-        // first see if player is online, if so no need to do anything extra
-        Player onlinePlayer = Bukkit.getPlayer(result.getPlayer());
-        if (onlinePlayer != null)
-            return onlinePlayer;
-
-        // if offline, first see if players UUID has already been searched this instance and grab it from here
-        UUID cachedUUID = Tattletail.cachedUUIDs.get(result.getPlayer());
-        if (cachedUUID != null)
-            return Bukkit.getOfflinePlayer(cachedUUID);
-
-        // if not, search for the players info and cache it for next time
-        OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(result.getPlayer());
-        if (offlinePlayer.getName() == null) return null;
-        Tattletail.cachedUUIDs.put(offlinePlayer.getName(), offlinePlayer.getUniqueId());
-        return offlinePlayer;
+        return Tattletail.getOfflinePlayer(result.getPlayer());
     }
 }

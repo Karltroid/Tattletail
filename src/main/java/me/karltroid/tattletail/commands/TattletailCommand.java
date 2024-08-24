@@ -58,8 +58,8 @@ public final class TattletailCommand implements CommandExecutor
         }
 
         // Get the player's join date and age
-        OfflinePlayer player1 = Bukkit.getOfflinePlayer(args[1]);
-        OfflinePlayer player2 = Bukkit.getOfflinePlayer(args[2]);
+        OfflinePlayer player1 = Tattletail.getOfflinePlayer(args[1]);
+        OfflinePlayer player2 = Tattletail.getOfflinePlayer(args[2]);
 
         UUID[] ignoredPlayer = Tattletail.getInstance().getIgnoredPlayer(player1.getUniqueId(), player2.getUniqueId());
 
@@ -165,7 +165,8 @@ public final class TattletailCommand implements CommandExecutor
             return false;
         }
 
-        UUID playerUUID = Bukkit.getOfflinePlayer(args[1]).getUniqueId();
+        UUID playerUUID = Tattletail.getOfflinePlayer(args[1]).getUniqueId();
+
         if (unWatch)
         {
             if (!Tattletail.getInstance().watchPlayers.contains(playerUUID))

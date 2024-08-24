@@ -343,4 +343,21 @@ public final class Tattletail extends JavaPlugin implements Listener
     public static void banPlayer(Player player, String reason) {
         Bukkit.getServer().dispatchCommand(Bukkit.getServer().getConsoleSender(), "ban -p " + player.getName() + " " + (isOldPlayer(player.getUniqueId()) ? "30m" : "4h") + " [TattletailAutoBan] " + reason + " When an admin is available they will look into this and make a finalized punishment. If this was an accident please make a ticket on our Discord, https://discord.modernbeta.org");
     }
+
+    public static OfflinePlayer getOfflinePlayer(String name) {
+        // first see if player is online, if so no need to do anything extra
+        Player onlinePlayer = Bukkit.getPlayer(name);
+        if (onlinePlayer != null)
+            return onlinePlayer;
+
+        // if offline, first see if players UUID has already been searched this instance and grab it from here
+        UUID cachedUUID = Tattletail.cachedUUIDs.get(name);
+        if (cachedUUID != null)
+            return Bukkit.getOfflinePlayer(cachedUUID);
+
+        // if not, search for the player's info and cache it for next time
+        OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(name);
+        Tattletail.cachedUUIDs.put(offlinePlayer.getName(), offlinePlayer.getUniqueId());
+        return offlinePlayer;
+    }
 }

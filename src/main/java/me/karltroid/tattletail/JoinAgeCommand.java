@@ -27,7 +27,7 @@ public final class JoinAgeCommand implements CommandExecutor
         }
 
         // Get the player's join date and age
-        OfflinePlayer player = Bukkit.getOfflinePlayer(args[0]);
+        OfflinePlayer player = Tattletail.getOfflinePlayer(args[0]);
         if (player.getFirstPlayed() <= 0)
         {
             sender.sendMessage(ChatColor.RED + "This player has never joined before.");
