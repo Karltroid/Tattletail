@@ -51,7 +51,7 @@ public class Arsonist implements Listener {
 
         Player potentialArsonist = event.getPlayer();
         OfflinePlayer playerBeingGriefed = getWhoArsonIsBeingCommittedAgainst(fireBlock, potentialArsonist);
-        if (playerBeingGriefed == null || playerBeingGriefed.getName() == null) return;
+        if (playerBeingGriefed == null) return;
 
         // check some ticks later if the fire block still exists
         BukkitRunnable checkFireTask = new BukkitRunnable() {
@@ -82,7 +82,7 @@ public class Arsonist implements Listener {
 
         Player potentialArsonist = event.getPlayer();
         OfflinePlayer playerBeingGriefed = getWhoArsonIsBeingCommittedAgainst(lavaBlock, potentialArsonist);
-        if (playerBeingGriefed == null || playerBeingGriefed.getName() == null || playerBeingGriefed.getName().toCharArray()[0] == '#') return;
+        if (playerBeingGriefed == null) return;
 
         // check some ticks later if the fire block still exists
         BukkitRunnable checkLavaTask = new BukkitRunnable() {
@@ -107,7 +107,7 @@ public class Arsonist implements Listener {
         if (!(event.getPrimingEntity() instanceof Player player)) return;
         
         OfflinePlayer playerBeingGriefed = getWhoArsonIsBeingCommittedAgainst(tntBlock, player);
-        if (playerBeingGriefed == null || playerBeingGriefed.getName() == null) return;
+        if (playerBeingGriefed == null) return;
 
         if (addToArsonistLikelihood(player, 3))
             Tattletail.banPlayer(player, "Exploding builds that aren't yours repeatedly.");
@@ -116,6 +116,7 @@ public class Arsonist implements Listener {
     }
 
     private OfflinePlayer getWhoArsonIsBeingCommittedAgainst(Block arsonBlock, Player potentialArsonist) {
+        UUID potentialArsonistUUID = potentialArsonist.getUniqueId();
         for (int x = -1; x <= 1; x++) {
             for (int y = -1; y <= 1; y++) {
                 for (int z = -1; z <= 1; z++) {
@@ -128,7 +129,9 @@ public class Arsonist implements Listener {
                     if (arsonBlock.getType().equals(Material.FIRE) && !manMadeBurnables.contains(neighboringBlock.getType())) continue;
 
                     OfflinePlayer blockOwner = CoreProtectHook.getWhoOwnsBlock(neighboringBlock);
-                    if (blockOwner == null || blockOwner.getUniqueId().equals(potentialArsonist.getUniqueId()) || Tattletail.ignorePlayers(potentialArsonist.getUniqueId(), blockOwner.getUniqueId())) continue;
+                    if (blockOwner == null) continue;
+                    UUID blockOwnerUUID = blockOwner.getUniqueId();
+                    if (blockOwnerUUID.equals(potentialArsonistUUID) || Tattletail.ignorePlayers(potentialArsonistUUID, blockOwnerUUID)) continue;
                     
                     return blockOwner;
                 }

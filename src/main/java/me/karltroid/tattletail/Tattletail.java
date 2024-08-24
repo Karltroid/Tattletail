@@ -48,12 +48,14 @@ public final class Tattletail extends JavaPlugin implements Listener
     public static List<Location> ignoreLocations = new ArrayList<>();
     public static List<UUID> watchPlayers = new ArrayList<>();
 
+    public static HashMap<String, UUID> cachedUUIDs = new HashMap<>();
+
     public static final Set<Material> IGNORE_TYPES = ImmutableSet.of( // all item types that shouldn't be protected unless special
             Material.OAK_LEAVES, Material.OAK_LOG, Material.OAK_SAPLING, Material.SPRUCE_LEAVES, Material.SPRUCE_LOG, Material.SPRUCE_SAPLING, Material.BIRCH_LEAVES,
             Material.BIRCH_LOG, Material.BIRCH_SAPLING, Material.DARK_OAK_LEAVES, Material.DARK_OAK_LOG, Material.DARK_OAK_SAPLING, Material.JUNGLE_LEAVES, Material.JUNGLE_LOG, Material.JUNGLE_SAPLING,
             Material.ACACIA_LEAVES, Material.ACACIA_LOG, Material.ACACIA_SAPLING, Material.MANGROVE_LEAVES, Material.MANGROVE_LOG, Material.GRASS_BLOCK,
             Material.SHORT_GRASS, Material.DIRT, Material.GRAVEL, Material.SAND, Material.WHEAT, Material.CARROTS, Material.POTATOES, Material.SUGAR_CANE,
-            Material.BEETROOTS, Material.TALL_GRASS, Material.NETHERRACK, Material.SWEET_BERRY_BUSH, Material.WARPED_FUNGUS, Material.CRIMSON_FUNGUS, Material.TORCH
+            Material.BEETROOTS, Material.TALL_GRASS, Material.NETHERRACK, Material.SWEET_BERRY_BUSH, Material.WARPED_FUNGUS, Material.CRIMSON_FUNGUS, Material.TORCH, Material.WALL_TORCH
     );
 
     private static final Set<Material> GRIEF_BLOCK_TYPES = ImmutableSet.of(
@@ -178,15 +180,18 @@ public final class Tattletail extends JavaPlugin implements Listener
         if (IGNORE_TYPES.contains(block.getType()) || ignoreLocations.contains(block.getLocation())) return;
 
         Player blockBreaker = event.getPlayer();
-        if(isNotMonitored(blockBreaker.getUniqueId()) && isOldPlayer(blockBreaker.getUniqueId())) return;
+        UUID blockBreakerUUID = blockBreaker.getUniqueId();
+        if(isNotMonitored(blockBreakerUUID) && isOldPlayer(blockBreakerUUID)) return;
 
         OfflinePlayer placedBy = CoreProtectHook.getWhoOwnsBlock(block);
-        if (placedBy == null || placedBy.getName() == null || placedBy.getName().toCharArray()[0] == '#') return;
-        if (ignorePlayers(blockBreaker.getUniqueId(), placedBy.getUniqueId())) return;
-        if (lastSuspect == blockBreaker.getUniqueId() && lastInnocent == placedBy.getUniqueId() && lastBlock == block.getType()) return;
+        if (placedBy == null) return;
+        UUID placedByUUID = placedBy.getUniqueId();
+
+        if (ignorePlayers(blockBreakerUUID,  placedByUUID)) return;
+        if (lastSuspect == blockBreakerUUID && lastInnocent == placedByUUID && lastBlock == block.getType()) return;
 
         lastSuspect = blockBreaker.getUniqueId();
-        lastInnocent = placedBy.getUniqueId();
+        lastInnocent = placedByUUID;
         lastBlock = block.getType();
 
         alertStaff(Mod, ChatColor.RED + "" + ChatColor.BOLD + blockBreaker.getName() + ChatColor.RED + " broke a " + ChatColor.BOLD + block.getType().name().toLowerCase().replaceAll("_", " ") + ChatColor.RED + " placed by " + ChatColor.BOLD + placedBy.getName() + ChatColor.GRAY + " [" + block.getX() + " " + block.getY() + " " + block.getZ() + (block.getWorld().getName().contains("_nether") ? " (nether)]" : "]"));
@@ -221,15 +226,16 @@ public final class Tattletail extends JavaPlugin implements Listener
 
         OfflinePlayer chestOwner = CoreProtectHook.getWhoOwnsBlock(containerBlock);
         if (chestOwner == null) return;
-
-        if (ignorePlayers(thief.getUniqueId(), chestOwner.getUniqueId())) return;
+        UUID chestOwnerUUID = chestOwner.getUniqueId();
+        UUID theifUUID = thief.getUniqueId();
+        if (ignorePlayers(theifUUID, chestOwnerUUID)) return;
 
         String itemStolenName = itemStolen.getType().name().toLowerCase().replaceAll("_", " ");
 
-        if (lastSuspect == thief.getUniqueId() && lastInnocent == chestOwner.getUniqueId() && lastItem == itemStolen.getType()) return;
+        if (lastSuspect == theifUUID && lastInnocent == chestOwnerUUID && lastItem == itemStolen.getType()) return;
 
-        lastSuspect = thief.getUniqueId();
-        lastInnocent = chestOwner.getUniqueId();
+        lastSuspect = theifUUID;
+        lastInnocent = chestOwnerUUID;
         lastItem = itemStolen.getType();
 
         alertStaff(Admin, ChatColor.RED + "" + ChatColor.BOLD + thief.getName() + ChatColor.RED + " took " + ChatColor.BOLD + itemStolen.getAmount() + " " + itemStolenName + ChatColor.RED +  " from " + ChatColor.BOLD + chestOwner.getName() + "'s " + (isModernBetaChest(containerBlock) ? "chest" : containerBlock.getType().name().toLowerCase().replaceAll("_", " ")) + ChatColor.GRAY + " [" + containerBlock.getX() + " " + containerBlock.getY() + " " + containerBlock.getZ() + (containerBlock.getWorld().getName().contains("_nether") ? " (nether)]" : "]"));
@@ -248,7 +254,8 @@ public final class Tattletail extends JavaPlugin implements Listener
 
     public static boolean isOldPlayer(UUID playerUUID)
     {
-        OfflinePlayer player = Bukkit.getOfflinePlayer(playerUUID);
+        Player player = Bukkit.getPlayer(playerUUID);
+        if (player == null) return false;
         long firstPlayedTimeMillis = player.getFirstPlayed();
         if (firstPlayedTimeMillis <= 0) return false;
 
