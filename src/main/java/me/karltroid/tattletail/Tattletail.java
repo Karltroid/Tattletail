@@ -41,7 +41,7 @@ public final class Tattletail extends JavaPlugin implements Listener
     UUID lastSuspect = null, lastInnocent = null;
     Material lastBlock = null, lastItem = null;
     ModernBeta modernBeta;
-    boolean discordSRVInstalled = false;
+    public boolean discordSRVInstalled = false;
     CoreProtectHook coreProtectHook;
 
     public static List<UUID[]> ignorePlayerCombos = new ArrayList<>();
@@ -114,12 +114,6 @@ public final class Tattletail extends JavaPlugin implements Listener
         Database.loadIgnoredLocations();
         Database.loadIgnoredPlayers();
         Database.loadMonitoredPlayers();
-
-        for (UUID[] uuid : Tattletail.getInstance().ignorePlayerCombos)
-            Tattletail.log(uuid[0].toString() + " - " + uuid[1].toString());
-
-        for (Location location : Tattletail.getInstance().ignoreLocations)
-            Tattletail.log(location.getWorld().getName() + " > " + location.getX() + "," + location.getY() + "," + location.getZ());
     }
 
     @Override

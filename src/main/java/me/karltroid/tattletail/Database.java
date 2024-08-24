@@ -80,10 +80,10 @@ public class Database
                         UUID player1UUID = UUID.fromString(ignoredPlayerDataResult.getString("player1UUID"));
                         UUID player2UUID = UUID.fromString(ignoredPlayerDataResult.getString("player2UUID"));
 
-                        Tattletail.getInstance().ignorePlayerCombos.add(new UUID[]{player1UUID, player2UUID});
+                        Tattletail.ignorePlayerCombos.add(new UUID[]{player1UUID, player2UUID});
                     }
 
-                    Tattletail.log("Ignored players loaded successfully");
+                    Tattletail.log("Loaded " + Tattletail.ignorePlayerCombos.size() + " Ignored players sets successfully");
                 }
             }
         }
@@ -106,7 +106,6 @@ public class Database
                     while (ignoredLocationsDataResult.next())
                     {
                         String worldName = ignoredLocationsDataResult.getString("world");
-                        Tattletail.log(worldName);
                         World world = Bukkit.getWorld(worldName);
                         int x = ignoredLocationsDataResult.getInt("x");
                         int y = ignoredLocationsDataResult.getInt("y");
@@ -137,10 +136,10 @@ public class Database
                     {
                         UUID playerUUID = UUID.fromString(ignoredPlayerDataResult.getString("playerUUID"));
 
-                        Tattletail.getInstance().watchPlayers.add(playerUUID);
+                        Tattletail.watchPlayers.add(playerUUID);
                     }
 
-                    Tattletail.log("Ignored players loaded successfully");
+                    Tattletail.log("Loaded " + Tattletail.watchPlayers.size() + " players to watch successfully");
                 }
             }
         }

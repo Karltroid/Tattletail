@@ -169,24 +169,24 @@ public final class TattletailCommand implements CommandExecutor
 
         if (unWatch)
         {
-            if (!Tattletail.getInstance().watchPlayers.contains(playerUUID))
+            if (!Tattletail.watchPlayers.contains(playerUUID))
             {
                 sender.sendMessage(ChatColor.RED + "This player is not being monitored already.");
                 return false;
             }
 
-            Tattletail.getInstance().watchPlayers.remove(playerUUID);
+            Tattletail.watchPlayers.remove(playerUUID);
             Tattletail.getInstance().alertStaff(Admin, ChatColor.RED + "[-] " + ChatColor.GREEN + args[1] + " will no longer be monitored by Tattletail - set by " + getSenderName(sender));
         }
         else
         {
-            if (Tattletail.getInstance().watchPlayers.contains(playerUUID))
+            if (Tattletail.watchPlayers.contains(playerUUID))
             {
                 sender.sendMessage(ChatColor.RED + "This player is already being monitored.");
                 return false;
             }
 
-            Tattletail.getInstance().watchPlayers.add(playerUUID);
+            Tattletail.watchPlayers.add(playerUUID);
             Tattletail.getInstance().alertStaff(Admin, ChatColor.GREEN + "[+] " + args[1] +" will now be monitored - set by " + getSenderName(sender));
         }
 
