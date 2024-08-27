@@ -4,6 +4,8 @@ import github.scarsz.discordsrv.DiscordSRV;
 import github.scarsz.discordsrv.api.Subscribe;
 import github.scarsz.discordsrv.api.events.DiscordReadyEvent;
 import github.scarsz.discordsrv.dependencies.jda.api.entities.TextChannel;
+import github.scarsz.discordsrv.util.DiscordUtil;
+import github.scarsz.discordsrv.util.MessageUtil;
 import me.karltroid.tattletail.Tattletail;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -20,12 +22,8 @@ public class DiscordSRVHook
     private DiscordSRVHook() {}
 
     @Subscribe
-    public void discordReadyEvent(DiscordReadyEvent event)
-    {
-        discordAdminBroadcastTextChannel = DiscordSRV.getPlugin().getDestinationTextChannelForGameChannelName(DISCORD_ADMIN_CHANNEL);
-        discordModBroadcastTextChannel = DiscordSRV.getPlugin().getDestinationTextChannelForGameChannelName(DISCORD_MOD_CHANNEL);
-
-        if (discordAdminBroadcastTextChannel != null && discordModBroadcastTextChannel != null)
+    public void discordReadyEvent(DiscordReadyEvent event) {
+        if (textChannelFound(DISCORD_ADMIN_CHANNEL) && textChannelFound(DISCORD_MOD_CHANNEL))
             Bukkit.getLogger().info("DiscordSRV Ready For TattleTail");
         else {
             Tattletail.getInstance().discordSRVInstalled = false;
@@ -34,23 +32,25 @@ public class DiscordSRVHook
         }
     }
 
-    public static void sendMessage(TextChannel textChannel, String message)
-    {
+    private boolean textChannelFound(String textChannel) {
+        return DiscordSRV.getPlugin().getDestinationTextChannelForGameChannelName(textChannel) != null;
+    }
+
+    public static void sendMessage(String textChannel, String message) {
         new BukkitRunnable() {
             @Override
             public void run() {
-                textChannel.sendMessage(ChatColor.stripColor(message)).complete();
+                TextChannel destinationChannel = DiscordSRV.getPlugin().getDestinationTextChannelForGameChannelName(textChannel);
+                DiscordUtil.sendMessage(destinationChannel, MessageUtil.strip(message));
             }
         }.runTaskAsynchronously(Tattletail.getInstance());
     }
 
-    public static void register()
-    {
+    public static void register() {
         DiscordSRV.api.subscribe(instance);
     }
 
-    public static void unregister()
-    {
+    public static void unregister() {
         DiscordSRV.api.unsubscribe(instance);
     }
 }

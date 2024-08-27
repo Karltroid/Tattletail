@@ -268,9 +268,9 @@ public final class Tattletail extends JavaPlugin implements Listener
     {
         // alert admins and mods (if requested) on discord
         if (discordSRVInstalled) {
-            DiscordSRVHook.sendMessage(DiscordSRVHook.discordAdminBroadcastTextChannel, alertMessage);
+            DiscordSRVHook.sendMessage(DiscordSRVHook.DISCORD_ADMIN_CHANNEL, alertMessage);
             if (staffType.equals(Mod))
-                DiscordSRVHook.sendMessage(DiscordSRVHook.discordModBroadcastTextChannel, alertMessage);
+                DiscordSRVHook.sendMessage(DiscordSRVHook.DISCORD_MOD_CHANNEL, alertMessage);
         }
 
         // alert admins and mods (if requested) in Minecraft
