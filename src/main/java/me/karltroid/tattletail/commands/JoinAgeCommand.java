@@ -1,5 +1,5 @@
-package me.karltroid.tattletail;
-import org.bukkit.Bukkit;
+package me.karltroid.tattletail.commands;
+import me.karltroid.tattletail.Tattletail;
 import org.bukkit.ChatColor;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.Command;

@@ -47,7 +47,7 @@ public class DogKiller implements Listener
         if (dogAbusers.contains(killer))
         {
             dogAbusers.remove(killer);
-            Tattletail.banPlayer(killer, "Killed an innocent dog, you monster.");
+            Tattletail.banPlayer(killer, true, "Killed an innocent dog, you monster.");
         }
     }
 }

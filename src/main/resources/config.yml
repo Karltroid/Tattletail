@@ -1,2 +1,33 @@
-# This is where tattletail logs will go!
-OldPlayerHourAge: 12
+# How long a player will give out alerts for possible griefing/stealing
+OldPlayerHourAge: 36
+
+# Words that auto ban players
+voldemortWords:
+  - (n\s*[i1]\s*g\s*(g|gg)\s*[e3]\s*r),******
+  - (n\s*[i1]\s*g\s*(g|gg)\s*[a4]),*****
+  - (f\s*[a4]\s*g\s*g\s*[o0]\s*[t7]),******
+  - (b\s*u\s*(b|bb)\s*[l1]\s*[e3]\s*g\s*u\s*m\s*p\s*[i1]\s*n\s*k),********* ****
+
+# Words that are filtered/hidden
+badWords:
+  - (s\s*[l1]\s*[a4]\s*v\s*(e|ery)),*****
+  - (r\s*[e3]\s*t\s*[a4]\s*r\s*(d|ed)),******
+  - (r\s*[a4]\s*c\s*[i1]\s*s\s*t),******
+  - (w\s*h\s*[o0]r\s*[e3]),*****
+  - (s\s*[l1]\s*u\s*t),****
+  - (n[o0]\s*n\s*c\s*[e3]),*****
+  - (b\s*u\s*k\s*k\s*[a4]\s*k\s*[e3]),********
+  - (b\s*d\s*[s5]\s*m),****
+  - (r\s*[a4]\s*p\s*[i1]\s*[s5]\s*t),******
+  - (e\s*j\s*[a4]\s*c\s*u\s*l\s*[a4]\s*t\s*(e|ion)),*********
+  - ([s5]\s*k\s*[a4]\s*n\s*k),*****
+  - (b\s*[i1]\s*m\s*b\s*[o0]),*****
+  - (g\s*[e3]\s*n\s*[o0]\s*c\s*[i1]\s*d\s*(e|ist)),********
+  - (\bp\s*[e3]\s*d\s*[o0]\b),****
+  - (\bh\s*[o0]\s*m\s*[o0]\b),****
+  - (\b[ck]\s*u\s*m\b),***
+  - (\bf\s*[a4]\s*g\b),***
+  - (\bs\s*[e3]\s*m\s*[e3]\s*n\b),*****
+  - (\br\s*[a4]\s*p\s*[e3]\b),****
+  - (\bk\s*[my]\s*s\b),***
+  - (s\s*u\s*[1i]\s*c\s*[1i]\s*d\s*[e3]),*******

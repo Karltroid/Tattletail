@@ -59,7 +59,7 @@ public class Arsonist implements Listener {
             public void run() {
                 if (fireBlock.getType().equals(Material.FIRE)) {
                     if (addToArsonistLikelihood(potentialArsonist, 1))
-                        Tattletail.banPlayer(potentialArsonist, "Setting builds on fire that aren't yours repeatedly.");
+                        Tattletail.banPlayer(potentialArsonist, true, "Setting builds on fire that aren't yours repeatedly.");
                     Tattletail.getInstance().alertStaff(Mod, ChatColor.RED + "" + ChatColor.BOLD + potentialArsonist.getName() + ChatColor.RED + " is burning down " + ChatColor.RED + "" + ChatColor.BOLD + playerBeingGriefed.getName() + "'s" + ChatColor.RED + " build! " + ChatColor.GRAY + " [" + fireBlock.getX() + " " + fireBlock.getY() + " " + fireBlock.getZ() + (fireBlock.getWorld().getName().contains("_nether") ? " (nether)]" : "]"));
                 }
                 // Remove from the HashMap after checking
@@ -90,7 +90,7 @@ public class Arsonist implements Listener {
             public void run() {
                 if (lavaBlock.getType().equals(Material.LAVA)) {
                     if (addToArsonistLikelihood(potentialArsonist, 2))
-                        Tattletail.banPlayer(potentialArsonist, "Dumping lava on builds that aren't yours repeatedly.");
+                        Tattletail.banPlayer(potentialArsonist, true, "Dumping lava on builds that aren't yours repeatedly.");
                     Tattletail.getInstance().alertStaff(Mod, ChatColor.RED + "" + ChatColor.BOLD + potentialArsonist.getName() + ChatColor.RED + " is dumping lava on " + ChatColor.RED + "" + ChatColor.BOLD + playerBeingGriefed.getName() + "'s" + ChatColor.RED + " build! " + ChatColor.GRAY + " [" + lavaBlock.getX() + " " + lavaBlock.getY() + " " + lavaBlock.getZ() + (lavaBlock.getWorld().getName().contains("_nether") ? " (nether)]" : "]"));
                 }
                 // Remove from the HashMap after checking
@@ -110,7 +110,7 @@ public class Arsonist implements Listener {
         if (playerBeingGriefed == null) return;
 
         if (addToArsonistLikelihood(player, 3))
-            Tattletail.banPlayer(player, "Exploding builds that aren't yours repeatedly.");
+            Tattletail.banPlayer(player, true, "Exploding builds that aren't yours repeatedly.");
         Tattletail.getInstance().alertStaff(Mod, ChatColor.RED + "" + ChatColor.BOLD + player.getName() + ChatColor.RED + " is exploding " + ChatColor.RED + "" + ChatColor.BOLD + playerBeingGriefed.getName() + "'s" + ChatColor.RED + " build! " + ChatColor.GRAY + " [" + tntBlock.getX() + " " + tntBlock.getY() + " " + tntBlock.getZ() + (tntBlock.getWorld().getName().contains("_nether") ? " (nether)]" : "]"));
 
     }

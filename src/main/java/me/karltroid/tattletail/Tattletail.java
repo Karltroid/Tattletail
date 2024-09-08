@@ -3,6 +3,7 @@ package me.karltroid.tattletail;
 import com.google.common.collect.ImmutableSet;
 import me.karltroid.tattletail.autobans.Arsonist;
 import me.karltroid.tattletail.autobans.DogKiller;
+import me.karltroid.tattletail.commands.JoinAgeCommand;
 import me.karltroid.tattletail.commands.TattletailCommand;
 import me.karltroid.tattletail.hooks.CoreProtectHook;
 import me.karltroid.tattletail.hooks.DiscordSRVHook;
@@ -10,7 +11,6 @@ import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.block.Container;
 import org.bukkit.block.Sign;
-import org.bukkit.block.sign.Side;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -74,6 +74,7 @@ public final class Tattletail extends JavaPlugin implements Listener
 
     DogKiller dogKiller = new DogKiller();
     Arsonist arsonist = new Arsonist();
+    WordFilter wordFilter;
 
     public enum Staff {
         Admin,
@@ -85,9 +86,12 @@ public final class Tattletail extends JavaPlugin implements Listener
     {
         main = this; // set singleton instance of the plugin
 
+        wordFilter = new WordFilter();
         getServer().getPluginManager().registerEvents(this, this);
         getServer().getPluginManager().registerEvents(dogKiller, this);
         getServer().getPluginManager().registerEvents(arsonist, this);
+        getServer().getPluginManager().registerEvents(wordFilter, this);
+
 
         if (Bukkit.getServer().getPluginManager().getPlugin("ModernBeta") != null)
         {
@@ -239,37 +243,6 @@ public final class Tattletail extends JavaPlugin implements Listener
         alertStaff(Admin, ChatColor.RED + "" + ChatColor.BOLD + thief.getName() + ChatColor.RED + " took " + ChatColor.BOLD + itemStolen.getAmount() + " " + itemStolenName + ChatColor.RED +  " from " + ChatColor.BOLD + chestOwner.getName() + "'s " + (isModernBetaChest(containerBlock) ? "chest" : containerBlock.getType().name().toLowerCase().replaceAll("_", " ")) + ChatColor.GRAY + " [" + containerBlock.getX() + " " + containerBlock.getY() + " " + containerBlock.getZ() + (containerBlock.getWorld().getName().contains("_nether") ? " (nether)]" : "]"));
     }
 
-    @EventHandler
-    void onSignChange(SignChangeEvent event) {
-
-        Player signChanger = event.getPlayer();
-        if (isNotMonitored(signChanger.getUniqueId()) && isOldPlayer(signChanger.getUniqueId())) return;
-
-        Block signBlock = event.getBlock();
-
-        if (ignoreLocations.contains(signBlock.getLocation())) return;
-
-        OfflinePlayer signOwner = CoreProtectHook.getWhoOwnsBlock(signBlock);
-        if (signOwner == null) return;
-        UUID chestOwnerUUID = signOwner.getUniqueId();
-        UUID signChangerUUID = signChanger.getUniqueId();
-        if (ignorePlayers(signChangerUUID, chestOwnerUUID) || chestOwnerUUID.equals(signChangerUUID)) return;
-
-        StringBuilder oldSignText = new StringBuilder();
-        for (String line : ((Sign)signBlock.getState()).getLines()) {
-            oldSignText.append(line).append(" ");
-        }
-
-        StringBuilder newSignText = new StringBuilder();
-        for (String line : event.getLines()) {
-            newSignText.append(line).append(" ");
-        }
-
-        if (oldSignText.toString().contentEquals(newSignText)) return;
-
-        alertStaff(Mod, ChatColor.RED + "" + ChatColor.BOLD + signChanger.getName() + ChatColor.RED + " changed " + ChatColor.BOLD + signOwner.getName() + "'s sign" + ChatColor.GRAY + " [" + signBlock.getX() + " " + signBlock.getY() + " " + signBlock.getZ() + (signBlock.getWorld().getName().contains("_nether") ? " (nether)]" : "]\n╚ BEFORE: " + ChatColor.RED + "" + ChatColor.ITALIC + oldSignText + ChatColor.GRAY + "\n╚ AFTER: " + ChatColor.RED + "" + ChatColor.ITALIC + newSignText));
-    }
-
     boolean isModernBetaChest(Block block)
     {
         if (!modernBetaInstalled) return false;
@@ -369,8 +342,8 @@ public final class Tattletail extends JavaPlugin implements Listener
     public FileConfiguration getPluginConfig() { return config; }
     public static Tattletail getInstance(){ return main; }
     public ModernBeta getModernBeta() { return modernBeta; }
-    public static void banPlayer(Player player, String reason) {
-        Bukkit.getServer().dispatchCommand(Bukkit.getServer().getConsoleSender(), "ban -p " + player.getName() + " " + (isOldPlayer(player.getUniqueId()) ? "30m" : "4h") + " [TattletailAutoBan] " + reason + " When an admin is available they will look into this and make a finalized punishment. If this was an accident please make a ticket on our Discord, https://discord.modernbeta.org");
+    public static void banPlayer(Player player, boolean publicBan, String reason) {
+        Bukkit.getServer().dispatchCommand(Bukkit.getServer().getConsoleSender(), "ban " + (publicBan ? "-p " : "") + player.getName() + " " + (isOldPlayer(player.getUniqueId()) ? "30m" : "4h") + " [TattletailAutoBan] " + reason + " When an admin is available they will look at your logs and make a finalized punishment. If this was an accident please make a ticket on our Discord, https://discord.modernbeta.org");
     }
 
     public static OfflinePlayer getOfflinePlayer(String name) {
