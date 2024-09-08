@@ -116,6 +116,10 @@ public class Arsonist implements Listener {
     }
 
     private OfflinePlayer getWhoArsonIsBeingCommittedAgainst(Block arsonBlock, Player potentialArsonist) {
+
+        // 99.99% of the time lava placed underground is legit gameplay
+        if (arsonBlock.getType().equals(Material.LAVA) && arsonBlock.getY() <= 63) return null;
+
         UUID potentialArsonistUUID = potentialArsonist.getUniqueId();
         for (int x = -1; x <= 1; x++) {
             for (int y = -1; y <= 1; y++) {

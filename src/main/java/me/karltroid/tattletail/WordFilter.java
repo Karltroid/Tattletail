@@ -36,7 +36,7 @@ public class WordFilter implements Listener {
 
     public void updateWordFilters() {
         voldemortWords = Tattletail.getInstance().getConfig().getStringList("voldemortWords");
-        badWords = voldemortWords;
+        badWords = Tattletail.getInstance().getConfig().getStringList("voldemortWords");
         badWords.addAll(Tattletail.getInstance().getConfig().getStringList("badWords"));
     }
 
@@ -126,7 +126,7 @@ public class WordFilter implements Listener {
         if (containsBadWord(newSignText.toString())) {
             event.setCancelled(true);
             signChanger.sendMessage(ChatColor.RED + "Sign change cancelled, contains a filtered word or phrase.");
-            Tattletail.getInstance().alertStaff(Admin, ChatColor.RED + "" + ChatColor.BOLD + signChanger.getName() + ChatColor.RED + " wrote a filtered word on a sign. (change cancelled)" + ChatColor.GRAY + " [" + signBlock.getX() + " " + signBlock.getY() + " " + signBlock.getZ() + (signBlock.getWorld().getName().contains("_nether") ? " (nether)]" : "]\n╚ BEFORE: " + ChatColor.RED + "" + ChatColor.ITALIC + oldSignText + ChatColor.GRAY + "\n╚ AFTER: " + ChatColor.RED + "" + ChatColor.ITALIC + newSignText));
+            Tattletail.getInstance().alertStaff(Mod, ChatColor.RED + "" + ChatColor.BOLD + signChanger.getName() + ChatColor.RED + " wrote a filtered word on a sign. (change cancelled)" + ChatColor.GRAY + " [" + signBlock.getX() + " " + signBlock.getY() + " " + signBlock.getZ() + (signBlock.getWorld().getName().contains("_nether") ? " (nether)]" : "]\n╚ BEFORE: " + ChatColor.RED + "" + ChatColor.ITALIC + oldSignText + ChatColor.GRAY + "\n╚ AFTER: " + ChatColor.RED + "" + ChatColor.ITALIC + newSignText));
 
             if (containsVoldemortWord(newSignText.toString())) {
                 Tattletail.banPlayer(signChanger, true, "Wrote a message on a sign containing a racist or other foul word/phrase.");
