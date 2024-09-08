@@ -58,7 +58,7 @@ public final class Tattletail extends JavaPlugin implements Listener
             Material.BIRCH_LOG, Material.BIRCH_SAPLING, Material.DARK_OAK_LEAVES, Material.DARK_OAK_LOG, Material.DARK_OAK_SAPLING, Material.JUNGLE_LEAVES, Material.JUNGLE_LOG, Material.JUNGLE_SAPLING,
             Material.ACACIA_LEAVES, Material.ACACIA_LOG, Material.ACACIA_SAPLING, Material.MANGROVE_LEAVES, Material.MANGROVE_LOG, Material.GRASS_BLOCK,
             Material.SHORT_GRASS, Material.DIRT, Material.GRAVEL, Material.SAND, Material.WHEAT, Material.CARROTS, Material.POTATOES, Material.SUGAR_CANE,
-            Material.BEETROOTS, Material.TALL_GRASS, Material.NETHERRACK, Material.SWEET_BERRY_BUSH, Material.WARPED_FUNGUS, Material.CRIMSON_FUNGUS, Material.TORCH, Material.WALL_TORCH
+            Material.BEETROOTS, Material.TALL_GRASS, Material.NETHERRACK, Material.SWEET_BERRY_BUSH, Material.WARPED_FUNGUS, Material.CRIMSON_FUNGUS, Material.TORCH, Material.WALL_TORCH, Material.CACTUS
     );
 
     private static final Set<Material> GRIEF_BLOCK_TYPES = ImmutableSet.of(
@@ -174,7 +174,8 @@ public final class Tattletail extends JavaPlugin implements Listener
     public void onBlockBreak(BlockBreakEvent event)
     {
         Block block = event.getBlock();
-        if (IGNORE_TYPES.contains(block.getType()) || ignoreLocations.contains(block.getLocation())) return;
+        Material blockType = block.getType();
+        if ((blockType.equals(Material.STONE) && block.getY() <= 63) || IGNORE_TYPES.contains(block.getType())) return;
 
         Player blockBreaker = event.getPlayer();
         UUID blockBreakerUUID = blockBreaker.getUniqueId();
