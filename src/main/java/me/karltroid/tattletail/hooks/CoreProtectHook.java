@@ -68,7 +68,7 @@ public class CoreProtectHook {
 
             if (result.getActionId() == 1 &&
                 (result.getBlockData().getMaterial().equals(block.getType()) ||
-                (Tattletail.getInstance().modernBetaInstalled && FatChests.isChestType(block.getType()))))
+                (Tattletail.getInstance().modernBetaInstalled && FatChests.isChestType(block.getType()) && FatChests.isChestType(result.getBlockData().getMaterial()))))
                 break;
 
             if (i == 0)
