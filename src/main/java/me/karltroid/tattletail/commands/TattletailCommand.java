@@ -59,7 +59,15 @@ public final class TattletailCommand implements CommandExecutor
 
         // Get the player's join date and age
         OfflinePlayer player1 = Tattletail.getOfflinePlayer(args[1]);
+        if (player1 == null) {
+            sender.sendMessage(ChatColor.RED + "First user you provided does not exist.");
+            return false;
+        }
         OfflinePlayer player2 = Tattletail.getOfflinePlayer(args[2]);
+        if (player2 == null) {
+            sender.sendMessage(ChatColor.RED + "Second user you provided does not exist.");
+            return false;
+        }
 
         UUID[] ignoredPlayer = Tattletail.getInstance().getIgnoredPlayer(player1.getUniqueId(), player2.getUniqueId());
 
@@ -165,7 +173,12 @@ public final class TattletailCommand implements CommandExecutor
             return false;
         }
 
-        UUID playerUUID = Tattletail.getOfflinePlayer(args[1]).getUniqueId();
+        OfflinePlayer offlinePlayer = Tattletail.getOfflinePlayer(args[1]);
+        if (offlinePlayer == null) {
+            sender.sendMessage(ChatColor.RED + "This player does not exist");
+            return false;
+        }
+        UUID playerUUID = offlinePlayer.getUniqueId();
 
         if (unWatch)
         {

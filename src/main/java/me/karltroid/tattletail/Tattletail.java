@@ -28,6 +28,8 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.modernbeta.modernbeta.ModernBeta;
+import org.modernbeta.modernbeta.blocks.chests.ChestInstance;
+import org.modernbeta.modernbeta.blocks.chests.FatChests;
 
 import java.io.File;
 import java.util.*;
@@ -43,7 +45,6 @@ public final class Tattletail extends JavaPlugin implements Listener
     static int oldPlayerHourAge; // how old the player needs to be in hours on the server to stop being tracked to avoid admin spam
     UUID lastSuspect = null, lastInnocent = null;
     Material lastBlock = null, lastItem = null;
-    ModernBeta modernBeta;
     public boolean discordSRVInstalled = false;
     CoreProtectHook coreProtectHook;
 
@@ -70,7 +71,7 @@ public final class Tattletail extends JavaPlugin implements Listener
     );
 
     static boolean testMode = false;
-    boolean modernBetaInstalled = false;
+    public boolean modernBetaInstalled = false;
 
     DogKiller dogKiller = new DogKiller();
     Arsonist arsonist = new Arsonist();
@@ -92,13 +93,9 @@ public final class Tattletail extends JavaPlugin implements Listener
         getServer().getPluginManager().registerEvents(arsonist, this);
         getServer().getPluginManager().registerEvents(wordFilter, this);
 
-
-        if (Bukkit.getServer().getPluginManager().getPlugin("ModernBeta") != null)
-        {
-            modernBeta = ModernBeta.main;
+        if (Bukkit.getServer().getPluginManager().getPlugin("ModernBeta") != null) {
             modernBetaInstalled = true;
         }
-
 
         if (Bukkit.getServer().getPluginManager().getPlugin("DiscordSRV") != null)
         {
@@ -132,6 +129,7 @@ public final class Tattletail extends JavaPlugin implements Listener
         Database.saveIgnoredLocations();
         Database.saveIgnoredPlayers();
         Database.saveMonitoredPlayers();
+        CoreProtectHook.closeCoreProtectConnection();
     }
 
     @EventHandler
@@ -213,9 +211,14 @@ public final class Tattletail extends JavaPlugin implements Listener
 
         Block containerBlock;
         if (modernBetaInstalled) {
-            containerBlock = thief.getTargetBlock(null, 5);
-            if (!isModernBetaChest(containerBlock))
-                return;
+            Tattletail.log("A");
+            ChestInstance chestInstance = ModernBeta.getInstance().getFatChests().getPlayersChestInstance(thief);
+            if (chestInstance == null) return;
+            Tattletail.log("B");
+            containerBlock = chestInstance.getLocation().getBlock();
+            Tattletail.log(chestInstance.getLocation().toString());
+            Tattletail.log(containerBlock.getLocation().toString());
+            Tattletail.log(containerBlock.getType().name());
         }
         else
         {
@@ -224,13 +227,19 @@ public final class Tattletail extends JavaPlugin implements Listener
             else return;
         }
 
+        Tattletail.log("C");
+
         if (ignoreLocations.contains(containerBlock.getLocation())) return;
+
+        Tattletail.log("D");
 
         OfflinePlayer chestOwner = CoreProtectHook.getWhoOwnsBlock(containerBlock);
         if (chestOwner == null) return;
+        Tattletail.log("E");
         UUID chestOwnerUUID = chestOwner.getUniqueId();
         UUID theifUUID = thief.getUniqueId();
         if (ignorePlayers(theifUUID, chestOwnerUUID)) return;
+        Tattletail.log("F");
 
         String itemStolenName = itemStolen.getType().name().toLowerCase().replaceAll("_", " ");
 
@@ -240,18 +249,7 @@ public final class Tattletail extends JavaPlugin implements Listener
         lastInnocent = chestOwnerUUID;
         lastItem = itemStolen.getType();
 
-        alertStaff(Admin, ChatColor.RED + "" + ChatColor.BOLD + thief.getName() + ChatColor.RED + " took " + ChatColor.BOLD + itemStolen.getAmount() + " " + itemStolenName + ChatColor.RED +  " from " + ChatColor.BOLD + chestOwner.getName() + "'s " + (isModernBetaChest(containerBlock) ? "chest" : containerBlock.getType().name().toLowerCase().replaceAll("_", " ")) + ChatColor.GRAY + " [" + containerBlock.getX() + " " + containerBlock.getY() + " " + containerBlock.getZ() + (containerBlock.getWorld().getName().contains("_nether") ? " (nether)]" : "]"));
-    }
-
-    boolean isModernBetaChest(Block block)
-    {
-        if (!modernBetaInstalled) return false;
-
-        Material blockType = block.getType();
-        return switch (blockType) {
-            case BROWN_SHULKER_BOX, BLACK_SHULKER_BOX, WHITE_SHULKER_BOX -> true;
-            default -> false;
-        };
+        alertStaff(Admin, ChatColor.RED + "" + ChatColor.BOLD + thief.getName() + ChatColor.RED + " took " + ChatColor.BOLD + itemStolen.getAmount() + " " + itemStolenName + ChatColor.RED +  " from " + ChatColor.BOLD + chestOwner.getName() + "'s " + (modernBetaInstalled && FatChests.isChestType(containerBlock.getType()) ? "chest" : containerBlock.getType().name().toLowerCase().replaceAll("_", " ")) + ChatColor.GRAY + " [" + containerBlock.getX() + " " + containerBlock.getY() + " " + containerBlock.getZ() + (containerBlock.getWorld().getName().contains("_nether") ? " (nether)]" : "]"));
     }
 
     public static boolean isOldPlayer(UUID playerUUID)
@@ -341,7 +339,7 @@ public final class Tattletail extends JavaPlugin implements Listener
 
     public FileConfiguration getPluginConfig() { return config; }
     public static Tattletail getInstance(){ return main; }
-    public ModernBeta getModernBeta() { return modernBeta; }
+
     public static void banPlayer(Player player, boolean publicBan, String reason) {
         Bukkit.getServer().dispatchCommand(Bukkit.getServer().getConsoleSender(), "ban " + (publicBan ? "-p " : "") + player.getName() + " " + (isOldPlayer(player.getUniqueId()) ? "30m" : "4h") + " [TattletailAutoBan] " + reason + " When an admin is available they will look at your logs and make a finalized punishment. If this was an accident please make a ticket on our Discord, https://discord.modernbeta.org");
     }
@@ -359,6 +357,7 @@ public final class Tattletail extends JavaPlugin implements Listener
 
         // if not, search for the player's info and cache it for next time
         OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(name);
+        if (offlinePlayer.getName() == null) return null;
         Tattletail.cachedUUIDs.put(offlinePlayer.getName(), offlinePlayer.getUniqueId());
         return offlinePlayer;
     }
