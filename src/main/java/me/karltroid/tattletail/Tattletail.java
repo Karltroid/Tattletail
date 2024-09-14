@@ -211,10 +211,9 @@ public final class Tattletail extends JavaPlugin implements Listener
 
         Block containerBlock;
         if (modernBetaInstalled) {
-            Tattletail.log("A");
             ChestInstance chestInstance = ModernBeta.getInstance().getFatChests().getPlayersChestInstance(thief);
             if (chestInstance == null) return;
-            Tattletail.log("B");
+
             containerBlock = chestInstance.getLocation().getBlock();
             Tattletail.log(chestInstance.getLocation().toString());
             Tattletail.log(containerBlock.getLocation().toString());
@@ -227,19 +226,13 @@ public final class Tattletail extends JavaPlugin implements Listener
             else return;
         }
 
-        Tattletail.log("C");
-
         if (ignoreLocations.contains(containerBlock.getLocation())) return;
-
-        Tattletail.log("D");
 
         OfflinePlayer chestOwner = CoreProtectHook.getWhoOwnsBlock(containerBlock);
         if (chestOwner == null) return;
-        Tattletail.log("E");
         UUID chestOwnerUUID = chestOwner.getUniqueId();
         UUID theifUUID = thief.getUniqueId();
         if (ignorePlayers(theifUUID, chestOwnerUUID)) return;
-        Tattletail.log("F");
 
         String itemStolenName = itemStolen.getType().name().toLowerCase().replaceAll("_", " ");
 
