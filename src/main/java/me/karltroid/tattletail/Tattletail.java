@@ -215,9 +215,6 @@ public final class Tattletail extends JavaPlugin implements Listener
             if (chestInstance == null) return;
 
             containerBlock = chestInstance.getLocation().getBlock();
-            Tattletail.log(chestInstance.getLocation().toString());
-            Tattletail.log(containerBlock.getLocation().toString());
-            Tattletail.log(containerBlock.getType().name());
         }
         else
         {
