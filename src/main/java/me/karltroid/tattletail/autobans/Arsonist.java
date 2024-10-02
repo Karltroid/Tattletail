@@ -31,7 +31,7 @@ public class Arsonist implements Listener {
     boolean addToArsonistLikelihood(Player player, int increase) {
         int newLikelihood = arsonistLikelihood.merge(player, increase, Integer::sum);
 
-        if (newLikelihood >= 5 && (!Tattletail.isOldPlayer(player.getUniqueId()) || !Tattletail.isNotMonitored(player.getUniqueId()))) {
+        if ((newLikelihood >= 5 && (!Tattletail.isOldPlayer(player.getUniqueId()) || !Tattletail.isNotMonitored(player.getUniqueId()))) || (newLikelihood >= 15 && Tattletail.isOldPlayer(player.getUniqueId()))) {
             arsonistLikelihood.remove(player);
             return true;
         }

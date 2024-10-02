@@ -331,7 +331,7 @@ public final class Tattletail extends JavaPlugin implements Listener
     public static Tattletail getInstance(){ return main; }
 
     public static void banPlayer(Player player, boolean publicBan, String reason) {
-        Bukkit.getServer().dispatchCommand(Bukkit.getServer().getConsoleSender(), "ban " + (publicBan ? "-p " : "") + player.getName() + " " + (isOldPlayer(player.getUniqueId()) ? "30m" : "4h") + " [TattletailAutoBan] " + reason + " When an admin is available they will look at your logs and make a finalized punishment. If this was an accident please make a ticket on our Discord, https://discord.modernbeta.org");
+        Bukkit.getServer().dispatchCommand(Bukkit.getServer().getConsoleSender(), "ban " + (publicBan ? "-p " : "") + player.getName() + " " + (isOldPlayer(player.getUniqueId()) ? "30m" : "4h") + " [TattletailAutoBan] " + reason + " When an admin is available they will look at your logs and make a finalized punishment. If this was an accident, misunderstanding and the bot made a mistake, please make a ticket on our Discord, https://discord.modernbeta.org");
     }
 
     public static OfflinePlayer getOfflinePlayer(String name) {
