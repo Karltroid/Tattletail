@@ -41,7 +41,7 @@ public class DogKiller implements Listener
         // exit if the killer or owner is unknown or the owner is killing their own dog
         Player killer = wolf.getKiller();
         AnimalTamer owner = wolf.getOwner();
-        if (killer == null || owner == null || killer.getUniqueId().equals(wolf.getOwner().getUniqueId()) || killer.hasPermission("tattletail.admin")) return;
+        if (killer == null || owner == null || killer.getUniqueId().equals(wolf.getOwner().getUniqueId())) return;
 
         // banish them!
         if (dogAbusers.contains(killer))

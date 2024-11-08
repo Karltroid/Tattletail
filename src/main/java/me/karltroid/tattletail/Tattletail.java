@@ -330,8 +330,19 @@ public final class Tattletail extends JavaPlugin implements Listener
     public FileConfiguration getPluginConfig() { return config; }
     public static Tattletail getInstance(){ return main; }
 
-    public static void banPlayer(Player player, boolean publicBan, String reason) {
-        Bukkit.getServer().dispatchCommand(Bukkit.getServer().getConsoleSender(), "ban " + (publicBan ? "-p " : "") + player.getName() + " " + (isOldPlayer(player.getUniqueId()) ? "30m" : "4h") + " [TattletailAutoBan] " + reason + " When an admin is available they will look at your logs and make a finalized punishment. If this was an accident, misunderstanding and the bot made a mistake, please make a ticket on our Discord, https://discord.modernbeta.org");
+    public static void banPlayer(Player banPlayer, boolean publicBan, String reason) {
+
+        // don't auto ban staff
+        if (banPlayer.hasPermission("tattletail.admin") || banPlayer.hasPermission("tattletail.mod"))
+            return;
+
+        // don't auto ban players while staff are online
+        for (Player otherPlayer : Bukkit.getOnlinePlayers()) {
+            if (otherPlayer.hasPermission("tattletail.admin"))
+                return;
+        }
+
+        Bukkit.getServer().dispatchCommand(Bukkit.getServer().getConsoleSender(), "ban " + (publicBan ? "-p " : "") + banPlayer.getName() + " " + (isOldPlayer(banPlayer.getUniqueId()) ? "30m" : "4h") + " [TattletailAutoBan] " + reason + " When an admin is available they will look at your logs and make a finalized punishment. If this was an accident, misunderstanding and the bot made a mistake, please make a ticket on our Discord, https://discord.modernbeta.org");
     }
 
     public static OfflinePlayer getOfflinePlayer(String name) {
